@@ -409,6 +409,48 @@ parseWords(input) {
                 document.getElementById('wordCount').textContent = this.words.length;
             }
 
+            parseWords(input) {
+                // Handle quoted phrases and regular comma/space separation
+                const words = [];
+                let current = '';
+                let inQuotes = false;
+                let quoteChar = '';
+                
+                for (let i = 0; i < input.length; i++) {
+                    const char = input[i];
+                    
+                    if ((char === '"' || char === "'") && !inQuotes) {
+                        // Start of quoted phrase
+                        inQuotes = true;
+                        quoteChar = char;
+                    } else if (char === quoteChar && inQuotes) {
+                        // End of quoted phrase
+                        inQuotes = false;
+                        quoteChar = '';
+                        if (current.trim()) {
+                            words.push(current.trim());
+                            current = '';
+                        }
+                    } else if (!inQuotes && (char === ',' || char === ' ')) {
+                        // Separator outside quotes
+                        if (current.trim()) {
+                            words.push(current.trim());
+                            current = '';
+                        }
+                    } else if (char !== ' ' || inQuotes) {
+                        // Add character (skip spaces outside quotes unless in quotes)
+                        current += char;
+                    }
+                }
+                
+                // Add final word if exists
+                if (current.trim()) {
+                    words.push(current.trim());
+                }
+                
+                return words.filter(word => word.length > 0);
+            }
+
             showStatus(message, isError = false) {
                 const status = document.getElementById('status');
                 status.textContent = message;
