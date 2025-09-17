@@ -1,4 +1,44 @@
-<!DOCTYPE html>
+parseWords(input) {
+                // Handle quoted phrases and regular comma/space separation
+                const words = [];
+                let current = '';
+                let inQuotes = false;
+                let quoteChar = '';
+                
+                for (let i = 0; i < input.length; i++) {
+                    const char = input[i];
+                    
+                    if ((char === '"' || char === "'") && !inQuotes) {
+                        // Start of quoted phrase
+                        inQuotes = true;
+                        quoteChar = char;
+                    } else if (char === quoteChar && inQuotes) {
+                        // End of quoted phrase
+                        inQuotes = false;
+                        quoteChar = '';
+                        if (current.trim()) {
+                            words.push(current.trim());
+                            current = '';
+                        }
+                    } else if (!inQuotes && (char === ',' || char === ' ')) {
+                        // Separator outside quotes
+                        if (current.trim()) {
+                            words.push(current.trim());
+                            current = '';
+                        }
+                    } else if (char !== ' ' || inQuotes) {
+                        // Add character (skip spaces outside quotes unless in quotes)
+                        current += char;
+                    }
+                }
+                
+                // Add final word if exists
+                if (current.trim()) {
+                    words.push(current.trim());
+                }
+                
+                return words.filter(word => word.length > 0);
+            }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -203,7 +243,7 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const wordsParam = urlParams.get('words');
                 if (wordsParam) {
-                    const allWords = decodeURIComponent(wordsParam).split(/[,\s]+/).filter(word => word.length > 0);
+                    const allWords = this.parseWords(decodeURIComponent(wordsParam));
                     
                     // Count word frequencies
                     const wordCounts = {};
@@ -298,7 +338,7 @@
                 const input = document.getElementById('wordInput').value.trim();
                 if (!input) return;
 
-                const newWords = input.split(/[,\s]+/).filter(word => word.length > 0);
+                const newWords = this.parseWords(input);
                 
                 // Count word frequencies (including existing words)
                 const wordCounts = {};
