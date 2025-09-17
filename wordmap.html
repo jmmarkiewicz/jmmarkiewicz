@@ -145,6 +145,11 @@
                     '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9'
                 ];
                 
+                // GitHub Gist configuration - you'll need to set these
+                this.gistId = 'f81e51c08c059de41e88b85c8c11029d'; // Replace with your gist ID
+                this.githubToken = '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'; // Replace with your token
+                this.gistFilename = 'wordmap-data.json';
+                
                 this.resize();
                 this.init();
                 this.animate();
@@ -158,7 +163,7 @@
                 this.canvas.height = window.innerHeight;
             }
 
-            init() {
+            async init() {
                 document.getElementById('addWords').addEventListener('click', () => {
                     this.addWords();
                 });
@@ -173,16 +178,30 @@
                     this.clearMap();
                 });
 
-                // Check for URL parameters
+                // Load existing words from Gist first
+                await this.loadWordsFromGist();
+
+                // Then check for URL parameters (these will override stored words)
                 this.checkURLParams();
             }
 
-            checkURLParams() {
+            async checkURLParams() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const wordsParam = urlParams.get('words');
                 if (wordsParam) {
-                    document.getElementById('wordInput').value = decodeURIComponent(wordsParam);
-                    this.addWords();
+                    // Clear existing words when new ones come from URL
+                    this.words = [];
+                    
+                    const newWords = decodeURIComponent(wordsParam).split(/[,\s]+/).filter(word => word.length > 0);
+                    newWords.forEach(word => {
+                        this.createWord(word);
+                    });
+                    
+                    this.updateWordCount();
+                    
+                    // Save new words to Gist
+                    await this.saveWordsToGist();
+                    
                     // Clear the URL parameters
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
@@ -288,13 +307,91 @@
                 this.words.push(word);
             }
 
-            clearMap() {
+            async clearMap() {
                 this.words = [];
                 this.updateWordCount();
+                await this.saveWordsToGist();
             }
 
             updateWordCount() {
                 document.getElementById('wordCount').textContent = this.words.length;
+            }
+
+            async loadWordsFromGist() {
+                if (!this.gistId || this.gistId === 'YOUR_GIST_ID_HERE') {
+                    console.log('Gist not configured, skipping load');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Authorization': `token ${this.githubToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const gistData = await response.json();
+                        const fileContent = gistData.files[this.gistFilename];
+                        
+                        if (fileContent) {
+                            const data = JSON.parse(fileContent.content);
+                            
+                            // Clear existing words and load from storage
+                            this.words = [];
+                            if (data.words && Array.isArray(data.words)) {
+                                data.words.forEach(word => {
+                                    this.createWord(word);
+                                });
+                            }
+                            
+                            this.updateWordCount();
+                            console.log('Loaded words from Gist:', data.words);
+                        }
+                    }
+                } catch (error) {
+                    console.log('Could not load from Gist:', error.message);
+                }
+            }
+
+            async saveWordsToGist() {
+                if (!this.gistId || this.gistId === 'YOUR_GIST_ID_HERE') {
+                    console.log('Gist not configured, skipping save');
+                    return;
+                }
+
+                try {
+                    const wordsList = this.words.map(word => word.text);
+                    const data = {
+                        words: wordsList,
+                        lastUpdated: new Date().toISOString()
+                    };
+
+                    const response = await fetch(`https://api.github.com/gists/${this.gistId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Authorization': `token ${this.githubToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            files: {
+                                [this.gistFilename]: {
+                                    content: JSON.stringify(data, null, 2)
+                                }
+                            }
+                        })
+                    });
+
+                    if (response.ok) {
+                        console.log('Saved words to Gist:', wordsList);
+                    } else {
+                        console.error('Failed to save to Gist:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error saving to Gist:', error.message);
+                }
             }
 
             calculateSimilarity(word1, word2) {
