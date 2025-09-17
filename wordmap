@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Word Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90vw;
+        }
+
+        #wordInput {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 16px;
+            width: 300px;
+            max-width: 100%;
+        }
+
+        #wordInput::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        #addWords, #clearMap {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        #clearMap {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        #addWords:hover, #clearMap:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .word-count {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 250px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            #wordInput {
+                width: 100%;
+            }
+
+            .info {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <input type="text" id="wordInput" placeholder="Enter words (space or comma separated)" />
+        <button id="addWords">Add Words</button>
+        <button id="clearMap">Clear Map</button>
+        <div class="word-count">Words: <span id="wordCount">0</span></div>
+    </div>
+
+    <div class="info">
+        Words drift and connect based on similarity. Click and drag to interact.
+    </div>
+
+    <script>
+        class WordMap {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.words = [];
+                this.mouse = { x: 0, y: 0 };
+                this.draggedWord = null;
+                this.colors = [
+                    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
+                    '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9'
+                ];
+                
+                this.resize();
+                this.init();
+                this.animate();
+                
+                window.addEventListener('resize', () => this.resize());
+                this.setupEvents();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            init() {
+                document.getElementById('addWords').addEventListener('click', () => {
+                    this.addWords();
+                });
+                
+                document.getElementById('wordInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.addWords();
+                    }
+                });
+                
+                document.getElementById('clearMap').addEventListener('click', () => {
+                    this.clearMap();
+                });
+
+                // Check for URL parameters
+                this.checkURLParams();
+            }
+
+            checkURLParams() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const wordsParam = urlParams.get('words');
+                if (wordsParam) {
+                    document.getElementById('wordInput').value = decodeURIComponent(wordsParam);
+                    this.addWords();
+                    // Clear the URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+
+            setupEvents() {
+                this.canvas.addEventListener('mousedown', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = e.clientX - rect.left;
+                    this.mouse.y = e.clientY - rect.top;
+                    
+                    this.draggedWord = this.getWordAtPosition(this.mouse.x, this.mouse.y);
+                });
+
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = e.clientX - rect.left;
+                    this.mouse.y = e.clientY - rect.top;
+                    
+                    if (this.draggedWord) {
+                        this.draggedWord.x = this.mouse.x;
+                        this.draggedWord.y = this.mouse.y;
+                        this.draggedWord.vx = 0;
+                        this.draggedWord.vy = 0;
+                    }
+                });
+
+                this.canvas.addEventListener('mouseup', () => {
+                    this.draggedWord = null;
+                });
+
+                // Touch events for mobile
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = touch.clientX - rect.left;
+                    this.mouse.y = touch.clientY - rect.top;
+                    
+                    this.draggedWord = this.getWordAtPosition(this.mouse.x, this.mouse.y);
+                });
+
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (this.draggedWord && e.touches[0]) {
+                        const touch = e.touches[0];
+                        const rect = this.canvas.getBoundingClientRect();
+                        this.mouse.x = touch.clientX - rect.left;
+                        this.mouse.y = touch.clientY - rect.top;
+                        
+                        this.draggedWord.x = this.mouse.x;
+                        this.draggedWord.y = this.mouse.y;
+                        this.draggedWord.vx = 0;
+                        this.draggedWord.vy = 0;
+                    }
+                });
+
+                this.canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.draggedWord = null;
+                });
+            }
+
+            getWordAtPosition(x, y) {
+                for (let word of this.words) {
+                    const distance = Math.sqrt((x - word.x) ** 2 + (y - word.y) ** 2);
+                    if (distance < word.radius + 10) {
+                        return word;
+                    }
+                }
+                return null;
+            }
+
+            addWords() {
+                const input = document.getElementById('wordInput').value.trim();
+                if (!input) return;
+
+                const newWords = input.split(/[,\s]+/).filter(word => word.length > 0);
+                
+                newWords.forEach(word => {
+                    if (!this.words.find(w => w.text.toLowerCase() === word.toLowerCase())) {
+                        this.createWord(word);
+                    }
+                });
+
+                document.getElementById('wordInput').value = '';
+                this.updateWordCount();
+            }
+
+            createWord(text) {
+                const word = {
+                    text: text,
+                    x: Math.random() * (this.canvas.width - 300) + 150,
+                    y: Math.random() * (this.canvas.height - 300) + 150,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    color: this.colors[Math.floor(Math.random() * this.colors.length)],
+                    size: Math.max(16, Math.min(32, 40 - text.length * 1.5)),
+                    radius: Math.max(40, text.length * 10),
+                    opacity: 1,
+                    pulsePhase: Math.random() * Math.PI * 2
+                };
+                this.words.push(word);
+            }
+
+            clearMap() {
+                this.words = [];
+                this.updateWordCount();
+            }
+
+            updateWordCount() {
+                document.getElementById('wordCount').textContent = this.words.length;
+            }
+
+            calculateSimilarity(word1, word2) {
+                const text1 = word1.text.toLowerCase();
+                const text2 = word2.text.toLowerCase();
+                
+                // Simple similarity based on common characters and length
+                let commonChars = 0;
+                for (let char of text1) {
+                    if (text2.includes(char)) commonChars++;
+                }
+                
+                const maxLength = Math.max(text1.length, text2.length);
+                const similarity = commonChars / maxLength;
+                
+                // Also consider first letter similarity
+                const firstLetterBonus = text1[0] === text2[0] ? 0.2 : 0;
+                
+                return Math.min(1, similarity + firstLetterBonus);
+            }
+
+            animate() {
+                this.ctx.fillStyle = 'rgba(15, 15, 30, 0.1)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw connections
+                this.words.forEach((word1, i) => {
+                    this.words.slice(i + 1).forEach(word2 => {
+                        const distance = Math.sqrt((word1.x - word2.x) ** 2 + (word1.y - word2.y) ** 2);
+                        const similarity = this.calculateSimilarity(word1, word2);
+                        
+                        if (similarity > 0.3 && distance < 300) {
+                            const opacity = (similarity * 0.5) * (1 - distance / 300);
+                            this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                            this.ctx.lineWidth = similarity * 2;
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(word1.x, word1.y);
+                            this.ctx.lineTo(word2.x, word2.y);
+                            this.ctx.stroke();
+                        }
+                    });
+                });
+
+                // Update and draw words
+                this.words.forEach((word, index) => {
+                    // Update position if not being dragged
+                    if (word !== this.draggedWord) {
+                        word.x += word.vx;
+                        word.y += word.vy;
+
+                        // Soft bounce off edges with more space
+                        const margin = word.radius + 20;
+                        if (word.x < margin) {
+                            word.vx = Math.abs(word.vx) * 0.7;
+                            word.x = margin;
+                        }
+                        if (word.x > this.canvas.width - margin) {
+                            word.vx = -Math.abs(word.vx) * 0.7;
+                            word.x = this.canvas.width - margin;
+                        }
+                        if (word.y < margin) {
+                            word.vy = Math.abs(word.vy) * 0.7;
+                            word.y = margin;
+                        }
+                        if (word.y > this.canvas.height - margin) {
+                            word.vy = -Math.abs(word.vy) * 0.7;
+                            word.y = this.canvas.height - margin;
+                        }
+
+                        // Add gentle center pull to keep words floating around
+                        const centerX = this.canvas.width / 2;
+                        const centerY = this.canvas.height / 2;
+                        const centerDistance = Math.sqrt((word.x - centerX) ** 2 + (word.y - centerY) ** 2);
+                        const maxDistance = Math.min(this.canvas.width, this.canvas.height) * 0.4;
+                        
+                        if (centerDistance > maxDistance) {
+                            const centerPull = 0.0005;
+                            word.vx += (centerX - word.x) / centerDistance * centerPull;
+                            word.vy += (centerY - word.y) / centerDistance * centerPull;
+                        }
+
+                        // Gentle drift and attraction/repulsion
+                        this.words.forEach((other, otherIndex) => {
+                            if (index !== otherIndex) {
+                                const dx = other.x - word.x;
+                                const dy = other.y - word.y;
+                                const distance = Math.sqrt(dx * dx + dy * dy);
+                                
+                                if (distance > 0 && distance < 200) {
+                                    const similarity = this.calculateSimilarity(word, other);
+                                    const force = similarity > 0.4 ? 0.0001 : -0.0003; // Attract similar, repel different
+                                    
+                                    word.vx += (dx / distance) * force;
+                                    word.vy += (dy / distance) * force;
+                                }
+                            }
+                        });
+
+                        // Add random drift to keep movement
+                        word.vx += (Math.random() - 0.5) * 0.002;
+                        word.vy += (Math.random() - 0.5) * 0.002;
+
+                        // Gentle friction
+                        word.vx *= 0.998;
+                        word.vy *= 0.998;
+
+                        // Minimum movement to prevent complete stillness
+                        const speed = Math.sqrt(word.vx * word.vx + word.vy * word.vy);
+                        if (speed < 0.01) {
+                            word.vx += (Math.random() - 0.5) * 0.02;
+                            word.vy += (Math.random() - 0.5) * 0.02;
+                        }
+                    }
+
+                    // Update pulse
+                    word.pulsePhase += 0.02;
+                    const pulse = Math.sin(word.pulsePhase) * 0.1 + 1;
+
+                    // Draw word background
+                    this.ctx.fillStyle = word.color;
+                    this.ctx.globalAlpha = 0.3 * pulse;
+                    this.ctx.beginPath();
+                    this.ctx.arc(word.x, word.y, word.radius * pulse, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Draw word text
+                    this.ctx.globalAlpha = word.opacity;
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = `bold ${word.size * pulse}px -apple-system, BlinkMacSystemFont, sans-serif`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(word.text, word.x, word.y);
+                });
+
+                this.ctx.globalAlpha = 1;
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize the word map
+        new WordMap();
+    </script>
+</body>
+</html>
