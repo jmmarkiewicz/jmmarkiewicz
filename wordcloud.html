@@ -258,7 +258,9 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const wordsParam = urlParams.get('words');
                 if (wordsParam) {
-                    const allWords = decodeURIComponent(wordsParam).split(/[,\s]+/).filter(word => word.length > 0);
+                    // Parse words more carefully to preserve phrases in quotes
+                    const rawInput = decodeURIComponent(wordsParam);
+                    const allWords = this.parseWordsAndPhrases(rawInput);
                     
                     // Count word frequencies
                     this.words.clear();
@@ -278,7 +280,7 @@
                 const input = document.getElementById('wordInput').value.trim();
                 if (!input) return;
 
-                const newWords = input.split(/[,\s]+/).filter(word => word.length > 0);
+                const newWords = this.parseWordsAndPhrases(input);
                 
                 newWords.forEach(word => {
                     const text = word.toLowerCase().trim();
@@ -289,6 +291,41 @@
 
                 document.getElementById('wordInput').value = '';
                 this.renderCloud();
+            }
+
+            parseWordsAndPhrases(input) {
+                const words = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < input.length; i++) {
+                    const char = input[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                        if (!inQuotes && current.trim()) {
+                            // End of quoted phrase
+                            words.push(current.trim());
+                            current = '';
+                        }
+                    } else if (!inQuotes && (char === ',' || char === ' ' || char === '\n')) {
+                        // Separator outside quotes
+                        if (current.trim()) {
+                            words.push(current.trim());
+                            current = '';
+                        }
+                    } else if (char !== '\r') {
+                        // Regular character (skip carriage returns)
+                        current += char;
+                    }
+                }
+                
+                // Add the last word/phrase
+                if (current.trim()) {
+                    words.push(current.trim());
+                }
+                
+                return words.filter(word => word.length > 0);
             }
 
             clearCloud() {
