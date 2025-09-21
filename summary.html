@@ -159,6 +159,11 @@
                 0 0 20px rgba(100, 255, 218, 0.3),
                 0 0 30px rgba(100, 255, 218, 0.1);
             margin: 0 auto;
+            opacity: 0;
+        }
+
+        .summary-text.ready {
+            opacity: 1;
         }
 
         .summary-text.complete {
@@ -298,6 +303,9 @@
                 });
                 
                 textElement.innerHTML = charSpans.join('');
+                
+                // Make the text container visible now that spans are ready
+                textElement.classList.add('ready');
                 
                 // Get all character spans (excluding spaces)
                 const spans = Array.from(textElement.querySelectorAll('span')).filter(span => 
