@@ -358,11 +358,26 @@
                 this.renderCloud();
             }
 
-            calculateFontSize(count, maxCount) {
-                const minSize = 24;
-                const maxSize = 84;
+            calculateFontSize(count, maxCount, totalWords) {
+                // Base sizing that scales down with more words
+                let baseMin, baseMax;
+                
+                if (totalWords <= 5) {
+                    baseMin = 32;
+                    baseMax = 96;
+                } else if (totalWords <= 10) {
+                    baseMin = 24;
+                    baseMax = 72;
+                } else if (totalWords <= 20) {
+                    baseMin = 18;
+                    baseMax = 54;
+                } else {
+                    baseMin = 14;
+                    baseMax = 36;
+                }
+                
                 const ratio = count / maxCount;
-                return Math.max(minSize, minSize + (maxSize - minSize) * ratio);
+                return Math.max(baseMin, baseMin + (baseMax - baseMin) * ratio);
             }
 
             getRandomColor() {
@@ -388,7 +403,7 @@
                 });
 
                 const wordElements = sortedWords.map(([word, count]) => {
-                    const fontSize = this.calculateFontSize(count, maxCount);
+                    const fontSize = this.calculateFontSize(count, maxCount, this.words.size);
                     const color = this.getRandomColor();
                     
                     return `
