@@ -291,49 +291,53 @@
                 const textElement = document.getElementById('summaryText');
                 const finalText = textElement.textContent;
                 
-                // Create matrix-style decoding effect
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
-                const textLength = finalText.length;
-                let decodedText = new Array(textLength).fill('');
-                let iterations = 0;
-                const maxIterations = 60; // About 5 seconds at 12fps
+                // Create spans for each character with transparency
+                const charSpans = finalText.split('').map((char, index) => {
+                    const opacity = char === ' ' ? 1 : 0; // Keep spaces visible
+                    return `<span style="opacity: ${opacity}; transition: opacity 0.3s ease;">${char}</span>`;
+                });
                 
-                // Initialize with random characters
-                for (let i = 0; i < textLength; i++) {
-                    if (finalText[i] === ' ') {
-                        decodedText[i] = ' '; // Keep spaces
-                    } else {
-                        decodedText[i] = chars[Math.floor(Math.random() * chars.length)];
+                textElement.innerHTML = charSpans.join('');
+                
+                // Get all character spans (excluding spaces)
+                const spans = Array.from(textElement.querySelectorAll('span')).filter(span => 
+                    span.textContent !== ' '
+                );
+                
+                let revealedCount = 0;
+                const totalChars = spans.length;
+                
+                const revealInterval = setInterval(() => {
+                    // Find hidden spans
+                    const hiddenSpans = spans.filter(span => 
+                        parseFloat(span.style.opacity) === 0
+                    );
+                    
+                    if (hiddenSpans.length === 0) {
+                        clearInterval(revealInterval);
+                        textElement.classList.add('complete');
+                        return;
                     }
-                }
-                
-                const decodeInterval = setInterval(() => {
-                    // Randomly decode some characters to their final form
-                    for (let i = 0; i < textLength; i++) {
-                        if (finalText[i] !== ' ' && decodedText[i] !== finalText[i]) {
-                            // Higher chance to decode as we progress
-                            const decodeChance = (iterations / maxIterations) * 0.1 + 0.02;
+                    
+                    // Reveal 1-3 random characters each iteration
+                    const charsToReveal = Math.min(
+                        Math.floor(Math.random() * 3) + 1,
+                        hiddenSpans.length
+                    );
+                    
+                    for (let i = 0; i < charsToReveal; i++) {
+                        if (hiddenSpans.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * hiddenSpans.length);
+                            const span = hiddenSpans[randomIndex];
                             
-                            if (Math.random() < decodeChance) {
-                                decodedText[i] = finalText[i];
-                            } else {
-                                // Keep scrambling undecoded characters
-                                decodedText[i] = chars[Math.floor(Math.random() * chars.length)];
-                            }
+                            span.style.opacity = '1';
+                            revealedCount++;
+                            
+                            // Remove from hidden list
+                            hiddenSpans.splice(randomIndex, 1);
                         }
                     }
-                    
-                    textElement.textContent = decodedText.join('');
-                    iterations++;
-                    
-                    // Stop when all characters are decoded or max iterations reached
-                    const allDecoded = decodedText.join('') === finalText;
-                    if (allDecoded || iterations >= maxIterations) {
-                        clearInterval(decodeInterval);
-                        textElement.textContent = finalText;
-                        textElement.classList.add('complete');
-                    }
-                }, 80); // ~12fps for smooth animation
+                }, 120); // Reveal characters every 120ms
             }
 
             createNeuralNetwork() {
