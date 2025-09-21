@@ -1,44 +1,4 @@
-parseWords(input) {
-                // Handle quoted phrases and regular comma/space separation
-                const words = [];
-                let current = '';
-                let inQuotes = false;
-                let quoteChar = '';
-                
-                for (let i = 0; i < input.length; i++) {
-                    const char = input[i];
-                    
-                    if ((char === '"' || char === "'") && !inQuotes) {
-                        // Start of quoted phrase
-                        inQuotes = true;
-                        quoteChar = char;
-                    } else if (char === quoteChar && inQuotes) {
-                        // End of quoted phrase
-                        inQuotes = false;
-                        quoteChar = '';
-                        if (current.trim()) {
-                            words.push(current.trim());
-                            current = '';
-                        }
-                    } else if (!inQuotes && (char === ',' || char === ' ')) {
-                        // Separator outside quotes
-                        if (current.trim()) {
-                            words.push(current.trim());
-                            current = '';
-                        }
-                    } else if (char !== ' ' || inQuotes) {
-                        // Add character (skip spaces outside quotes unless in quotes)
-                        current += char;
-                    }
-                }
-                
-                // Add final word if exists
-                if (current.trim()) {
-                    words.push(current.trim());
-                }
-                
-                return words.filter(word => word.length > 0);
-            }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -243,7 +203,7 @@ parseWords(input) {
                 const urlParams = new URLSearchParams(window.location.search);
                 const wordsParam = urlParams.get('words');
                 if (wordsParam) {
-                    const allWords = this.parseWords(decodeURIComponent(wordsParam));
+                    const allWords = decodeURIComponent(wordsParam).split(/[,\s]+/).filter(word => word.length > 0);
                     
                     // Count word frequencies
                     const wordCounts = {};
@@ -338,7 +298,7 @@ parseWords(input) {
                 const input = document.getElementById('wordInput').value.trim();
                 if (!input) return;
 
-                const newWords = this.parseWords(input);
+                const newWords = input.split(/[,\s]+/).filter(word => word.length > 0);
                 
                 // Count word frequencies (including existing words)
                 const wordCounts = {};
@@ -382,7 +342,7 @@ parseWords(input) {
                     text: text,
                     count: count, // Store the count for reference
                     x: Math.random() * (this.canvas.width - 300) + 150,
-                    y: Math.random() * (this.canvas.height - 300) + 150,
+                    y: Math.random() * (this.canvas.height - 400) + 200, // Start below control panel
                     vx: (Math.random() - 0.5) * 0.8,
                     vy: (Math.random() - 0.5) * 0.8,
                     color: this.colors[Math.floor(Math.random() * this.colors.length)],
@@ -407,48 +367,6 @@ parseWords(input) {
 
             updateWordCount() {
                 document.getElementById('wordCount').textContent = this.words.length;
-            }
-
-            parseWords(input) {
-                // Handle quoted phrases and regular comma/space separation
-                const words = [];
-                let current = '';
-                let inQuotes = false;
-                let quoteChar = '';
-                
-                for (let i = 0; i < input.length; i++) {
-                    const char = input[i];
-                    
-                    if ((char === '"' || char === "'") && !inQuotes) {
-                        // Start of quoted phrase
-                        inQuotes = true;
-                        quoteChar = char;
-                    } else if (char === quoteChar && inQuotes) {
-                        // End of quoted phrase
-                        inQuotes = false;
-                        quoteChar = '';
-                        if (current.trim()) {
-                            words.push(current.trim());
-                            current = '';
-                        }
-                    } else if (!inQuotes && (char === ',' || char === ' ')) {
-                        // Separator outside quotes
-                        if (current.trim()) {
-                            words.push(current.trim());
-                            current = '';
-                        }
-                    } else if (char !== ' ' || inQuotes) {
-                        // Add character (skip spaces outside quotes unless in quotes)
-                        current += char;
-                    }
-                }
-                
-                // Add final word if exists
-                if (current.trim()) {
-                    words.push(current.trim());
-                }
-                
-                return words.filter(word => word.length > 0);
             }
 
             showStatus(message, isError = false) {
@@ -480,24 +398,91 @@ parseWords(input) {
                 const text1 = word1.text.toLowerCase();
                 const text2 = word2.text.toLowerCase();
                 
-                // Simple similarity based on common characters and length
+                // If it's the exact same word, maximum similarity
+                if (text1 === text2) return 1.0;
+                
+                // Semantic clustering - group words by business/conceptual themes
+                const businessClusters = {
+                    leadership: ['leadership', 'leader', 'management', 'executive', 'director', 'ceo', 'manager', 'supervisor', 'chief', 'governance'],
+                    innovation: ['innovation', 'creative', 'creativity', 'invention', 'breakthrough', 'novel', 'pioneering', 'disruptive', 'new', 'ideas'],
+                    collaboration: ['collaboration', 'teamwork', 'cooperation', 'partnership', 'unity', 'together', 'collective', 'shared', 'joint', 'community'],
+                    strategy: ['strategy', 'strategic', 'planning', 'vision', 'roadmap', 'goals', 'objectives', 'mission', 'direction', 'purpose'],
+                    technology: ['technology', 'tech', 'software', 'hardware', 'systems', 'infrastructure', 'platform', 'tools', 'solution'],
+                    digital: ['digital', 'digitalization', 'digitization', 'online', 'virtual', 'cloud', 'platform', 'ecosystem', 'connectivity', 'internet', 'web', 'mobile', 'app', 'saas'],
+                    digitaltransformation: ['transformation', 'change', 'evolution', 'modernization', 'upgrade', 'migration', 'adoption', 'implementation', 'transition', 'reform', 'revolution'],
+                    ai: ['ai', 'artificial', 'intelligence', 'machine', 'learning', 'ml', 'deep', 'neural', 'network', 'algorithm', 'model', 'training', 'prediction'],
+                    llm: ['llm', 'gpt', 'chatgpt', 'claude', 'gemini', 'copilot', 'assistant', 'chatbot', 'conversational', 'generative', 'prompt', 'nlp', 'language'],
+                    data: ['data', 'analytics', 'insights', 'metrics', 'kpi', 'dashboard', 'reporting', 'visualization', 'business', 'intelligence', 'bi', 'statistics'],
+                    automation: ['automation', 'automated', 'robotic', 'rpa', 'workflow', 'process', 'efficiency', 'optimization', 'streamline', 'robotics'],
+                    customer: ['customer', 'client', 'user', 'consumer', 'buyer', 'audience', 'market', 'service', 'experience', 'satisfaction', 'journey'],
+                    culture: ['culture', 'values', 'beliefs', 'mindset', 'attitude', 'behavior', 'environment', 'workplace', 'community', 'engagement'],
+                    agile: ['agile', 'flexible', 'adaptive', 'responsive', 'quick', 'fast', 'iterative', 'sprint', 'scrum', 'kanban', 'lean'],
+                    quality: ['quality', 'excellence', 'standards', 'performance', 'efficiency', 'effectiveness', 'optimization', 'improvement', 'best', 'practices'],
+                    cybersecurity: ['security', 'cybersecurity', 'privacy', 'protection', 'risk', 'compliance', 'governance', 'threat', 'vulnerability', 'encryption'],
+                    sustainability: ['sustainability', 'sustainable', 'green', 'environment', 'esg', 'carbon', 'renewable', 'responsible', 'ethical', 'impact']
+                };
+                
+                // Check if both words belong to the same cluster
+                for (const [cluster, words] of Object.entries(businessClusters)) {
+                    const word1InCluster = words.some(w => text1.includes(w) || w.includes(text1));
+                    const word2InCluster = words.some(w => text2.includes(w) || w.includes(text2));
+                    
+                    if (word1InCluster && word2InCluster) {
+                        return 0.8; // High similarity for same semantic cluster
+                    }
+                }
+                
+                // Related clusters - some concepts naturally connect
+                const relatedClusters = {
+                    leadership: ['strategy', 'digitaltransformation', 'culture', 'innovation'],
+                    innovation: ['technology', 'digitaltransformation', 'agile', 'ai', 'digital'],
+                    collaboration: ['culture', 'agile', 'digital', 'automation'],
+                    strategy: ['leadership', 'digitaltransformation', 'customer', 'innovation'],
+                    technology: ['innovation', 'digitaltransformation', 'agile', 'digital', 'ai', 'automation'],
+                    digital: ['digitaltransformation', 'technology', 'ai', 'llm', 'data', 'automation', 'customer'],
+                    digitaltransformation: ['leadership', 'innovation', 'strategy', 'technology', 'digital', 'ai', 'culture'],
+                    ai: ['innovation', 'technology', 'digital', 'llm', 'data', 'automation'],
+                    llm: ['ai', 'digital', 'technology', 'innovation', 'automation'],
+                    data: ['ai', 'digital', 'technology', 'quality', 'customer', 'llm'],
+                    automation: ['technology', 'digital', 'ai', 'agile', 'quality', 'collaboration'],
+                    customer: ['strategy', 'quality', 'culture', 'digital', 'data'],
+                    culture: ['leadership', 'collaboration', 'customer', 'digitaltransformation', 'agile'],
+                    agile: ['innovation', 'technology', 'collaboration', 'digitaltransformation', 'automation'],
+                    quality: ['customer', 'digitaltransformation', 'agile', 'data', 'automation'],
+                    cybersecurity: ['technology', 'digital', 'ai', 'data', 'quality'],
+                    sustainability: ['strategy', 'culture', 'innovation', 'digitaltransformation', 'quality']
+                };
+                
+                // Check for related cluster connections
+                for (const [mainCluster, relatedList] of Object.entries(relatedClusters)) {
+                    const word1InMain = businessClusters[mainCluster]?.some(w => text1.includes(w) || w.includes(text1));
+                    
+                    if (word1InMain) {
+                        for (const relatedCluster of relatedList) {
+                            const word2InRelated = businessClusters[relatedCluster]?.some(w => text2.includes(w) || w.includes(text2));
+                            if (word2InRelated) {
+                                return 0.4; // Moderate similarity for related concepts
+                            }
+                        }
+                    }
+                }
+                
+                // Fallback to character similarity (much reduced influence)
                 let commonChars = 0;
                 for (let char of text1) {
                     if (text2.includes(char)) commonChars++;
                 }
                 
                 const maxLength = Math.max(text1.length, text2.length);
-                const similarity = commonChars / maxLength;
+                const charSimilarity = commonChars / maxLength;
                 
-                // Also consider first letter similarity
-                const firstLetterBonus = text1[0] === text2[0] ? 0.2 : 0;
-                
-                return Math.min(1, similarity + firstLetterBonus);
+                // Only use character similarity if it's quite high, and reduce its impact
+                return charSimilarity > 0.7 ? charSimilarity * 0.3 : 0;
             }
 
             animate() {
-                this.ctx.fillStyle = 'rgba(15, 15, 30, 0.1)';
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                // Clear the entire canvas for crisp, clean rendering
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
                 // Draw connections
                 this.words.forEach((word1, i) => {
@@ -524,8 +509,10 @@ parseWords(input) {
                         word.x += word.vx;
                         word.y += word.vy;
 
-                        // Soft bounce off edges with more space
+                        // Soft bounce off edges with more space AND avoid control panel
                         const margin = word.radius + 20;
+                        const topMargin = 120; // Extra space for control panel
+                        
                         if (word.x < margin) {
                             word.vx = Math.abs(word.vx) * 0.7;
                             word.x = margin;
@@ -534,20 +521,20 @@ parseWords(input) {
                             word.vx = -Math.abs(word.vx) * 0.7;
                             word.x = this.canvas.width - margin;
                         }
-                        if (word.y < margin) {
+                        if (word.y < topMargin) {
                             word.vy = Math.abs(word.vy) * 0.7;
-                            word.y = margin;
+                            word.y = topMargin;
                         }
                         if (word.y > this.canvas.height - margin) {
                             word.vy = -Math.abs(word.vy) * 0.7;
                             word.y = this.canvas.height - margin;
                         }
 
-                        // Add gentle center pull to keep words floating around
+                        // Add gentle center pull to keep words floating around (but below control panel)
                         const centerX = this.canvas.width / 2;
-                        const centerY = this.canvas.height / 2;
+                        const centerY = (this.canvas.height + 120) / 2; // Center point below control panel
                         const centerDistance = Math.sqrt((word.x - centerX) ** 2 + (word.y - centerY) ** 2);
-                        const maxDistance = Math.min(this.canvas.width, this.canvas.height) * 0.4;
+                        const maxDistance = Math.min(this.canvas.width, this.canvas.height - 120) * 0.4;
                         
                         if (centerDistance > maxDistance) {
                             const centerPull = 0.0005;
@@ -561,30 +548,60 @@ parseWords(input) {
                                 const dx = other.x - word.x;
                                 const dy = other.y - word.y;
                                 const distance = Math.sqrt(dx * dx + dy * dy);
+                                const minDistance = word.radius + other.radius + 20; // Minimum safe distance
                                 
-                                if (distance > 0 && distance < 200) {
+                                if (distance > 0) {
                                     const similarity = this.calculateSimilarity(word, other);
-                                    const force = similarity > 0.4 ? 0.0001 : -0.0003; // Attract similar, repel different
                                     
-                                    word.vx += (dx / distance) * force;
-                                    word.vy += (dy / distance) * force;
+                                    // Collision avoidance - strong repulsion when too close
+                                    if (distance < minDistance) {
+                                        const pushForce = (minDistance - distance) * 0.002;
+                                        word.vx -= (dx / distance) * pushForce;
+                                        word.vy -= (dy / distance) * pushForce;
+                                    }
+                                    // Gentle attraction for similar words (but not too close)
+                                    else if (similarity > 0.4 && distance < 250) {
+                                        const attractForce = similarity * 0.00005;
+                                        word.vx += (dx / distance) * attractForce;
+                                        word.vy += (dy / distance) * attractForce;
+                                    }
+                                    // Gentle repulsion for different words
+                                    else if (similarity <= 0.4 && distance < 180) {
+                                        const repelForce = (1 - similarity) * 0.0001;
+                                        word.vx -= (dx / distance) * repelForce;
+                                        word.vy -= (dy / distance) * repelForce;
+                                    }
                                 }
                             }
                         });
 
-                        // Add random drift to keep movement
-                        word.vx += (Math.random() - 0.5) * 0.002;
-                        word.vy += (Math.random() - 0.5) * 0.002;
+                        // Add gentle orbital movement to prevent complete stillness
+                        word.vx += Math.sin(Date.now() * 0.0002 + index) * 0.0005;
+                        word.vy += Math.cos(Date.now() * 0.0002 + index) * 0.0005;
 
                         // Gentle friction
                         word.vx *= 0.998;
                         word.vy *= 0.998;
 
-                        // Minimum movement to prevent complete stillness
+                        // Minimum movement with collision-aware adjustment
                         const speed = Math.sqrt(word.vx * word.vx + word.vy * word.vy);
-                        if (speed < 0.01) {
-                            word.vx += (Math.random() - 0.5) * 0.02;
-                            word.vy += (Math.random() - 0.5) * 0.02;
+                        if (speed < 0.005) {
+                            // Add slight movement in a direction away from nearby words
+                            let pushX = 0, pushY = 0;
+                            this.words.forEach(other => {
+                                if (other !== word) {
+                                    const dx = word.x - other.x;
+                                    const dy = word.y - other.y;
+                                    const distance = Math.sqrt(dx * dx + dy * dy);
+                                    if (distance < 150) {
+                                        pushX += dx / distance * 0.01;
+                                        pushY += dy / distance * 0.01;
+                                    }
+                                }
+                            });
+                            
+                            word.vx += pushX + (Math.random() - 0.5) * 0.01;
+                            word.vy += pushY + (Math.random() - 0.5) * 0.01;
                         }
                     }
 
