@@ -287,7 +287,15 @@
                 const textElement = document.getElementById('summaryText');
                 const text = textElement.textContent;
                 
-                // Reset text for typewriter effect
+                // For longer text, skip typewriter effect and show immediately
+                if (text.length > 150) {
+                    textElement.classList.add('complete');
+                    textElement.style.whiteSpace = 'normal';
+                    textElement.style.borderRight = 'none';
+                    return;
+                }
+                
+                // Reset text for typewriter effect (only for shorter text)
                 textElement.textContent = '';
                 textElement.style.whiteSpace = 'nowrap';
                 textElement.style.borderRight = '3px solid #64ffda';
