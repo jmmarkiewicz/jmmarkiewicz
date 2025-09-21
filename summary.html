@@ -94,6 +94,7 @@
         .ai-badge {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
             background: linear-gradient(45deg, #64ffda, #00bcd4);
             color: #0a0a0a;
@@ -101,8 +102,11 @@
             border-radius: 20px;
             font-size: 14px;
             font-weight: 600;
-            margin-bottom: 40px;
+            margin: 0 auto 40px auto;
             animation: glow 3s infinite ease-in-out;
+            white-space: nowrap;
+            width: auto;
+            max-width: 250px;
         }
 
         @keyframes glow {
@@ -145,23 +149,19 @@
         }
 
         .summary-text {
-            color: #e0e6ed;
+            color: #64ffda;
             font-size: clamp(20px, 2.5vw, 32px);
             line-height: 1.6;
             font-weight: 400;
             letter-spacing: -0.01em;
-            overflow: hidden;
-            border-right: 3px solid #64ffda;
-            white-space: nowrap;
+            text-shadow: 
+                0 0 10px rgba(100, 255, 218, 0.5),
+                0 0 20px rgba(100, 255, 218, 0.3),
+                0 0 30px rgba(100, 255, 218, 0.1);
             margin: 0 auto;
-            animation: 
-                typewriter 4s steps(200, end) 1s forwards,
-                blink 1s infinite;
         }
 
         .summary-text.complete {
-            white-space: normal;
-            border-right: none;
             animation: none;
         }
 
@@ -289,46 +289,51 @@
 
             startTypewriter() {
                 const textElement = document.getElementById('summaryText');
-                const fullText = textElement.textContent;
-                const words = fullText.split(' ');
+                const finalText = textElement.textContent;
                 
-                // Reset text for typewriter effect
-                textElement.textContent = '';
-                textElement.style.whiteSpace = 'normal';
-                textElement.style.borderRight = '3px solid #64ffda';
+                // Create matrix-style decoding effect
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+                const textLength = finalText.length;
+                let decodedText = new Array(textLength).fill('');
+                let iterations = 0;
+                const maxIterations = 60; // About 5 seconds at 12fps
                 
-                let currentWords = [];
-                let wordIndex = 0;
-                
-                const typeNextWord = () => {
-                    if (wordIndex < words.length) {
-                        // Simulate AI thinking with random pauses
-                        const thinkingTime = Math.random() * 400 + 100; // 100-500ms
-                        
-                        setTimeout(() => {
-                            // Add the next word
-                            currentWords.push(words[wordIndex]);
-                            wordIndex++;
-                            textElement.textContent = currentWords.join(' ');
-                            
-                            // Longer pause at sentence endings
-                            const currentWord = words[wordIndex - 1];
-                            const isEndOfSentence = currentWord && (currentWord.includes('.') || currentWord.includes('!') || currentWord.includes('?'));
-                            const nextDelay = isEndOfSentence ? Math.random() * 600 + 400 : Math.random() * 200 + 50;
-                            
-                            setTimeout(typeNextWord, nextDelay);
-                        }, thinkingTime);
+                // Initialize with random characters
+                for (let i = 0; i < textLength; i++) {
+                    if (finalText[i] === ' ') {
+                        decodedText[i] = ' '; // Keep spaces
                     } else {
-                        // Animation complete
-                        setTimeout(() => {
-                            textElement.classList.add('complete');
-                            textElement.style.borderRight = 'none';
-                        }, 800);
+                        decodedText[i] = chars[Math.floor(Math.random() * chars.length)];
                     }
-                };
+                }
                 
-                // Start typing after initial pause
-                setTimeout(typeNextWord, 500);
+                const decodeInterval = setInterval(() => {
+                    // Randomly decode some characters to their final form
+                    for (let i = 0; i < textLength; i++) {
+                        if (finalText[i] !== ' ' && decodedText[i] !== finalText[i]) {
+                            // Higher chance to decode as we progress
+                            const decodeChance = (iterations / maxIterations) * 0.1 + 0.02;
+                            
+                            if (Math.random() < decodeChance) {
+                                decodedText[i] = finalText[i];
+                            } else {
+                                // Keep scrambling undecoded characters
+                                decodedText[i] = chars[Math.floor(Math.random() * chars.length)];
+                            }
+                        }
+                    }
+                    
+                    textElement.textContent = decodedText.join('');
+                    iterations++;
+                    
+                    // Stop when all characters are decoded or max iterations reached
+                    const allDecoded = decodedText.join('') === finalText;
+                    if (allDecoded || iterations >= maxIterations) {
+                        clearInterval(decodeInterval);
+                        textElement.textContent = finalText;
+                        textElement.classList.add('complete');
+                    }
+                }, 80); // ~12fps for smooth animation
             }
 
             createNeuralNetwork() {
