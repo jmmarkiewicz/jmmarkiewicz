@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Word Map</title>
+    <title>Dynamic Word Cloud</title>
     <style>
         * {
             margin: 0;
@@ -12,72 +12,123 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533a7d 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             min-height: 100vh;
-            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        #canvas {
+        .neural-network {
             position: fixed;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.1;
             z-index: 1;
         }
 
+        .node {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #64ffda;
+            border-radius: 50%;
+            animation: pulse 4s infinite ease-in-out;
+        }
+
+        .connection {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #64ffda, transparent);
+            animation: dataFlow 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        @keyframes dataFlow {
+            0% { opacity: 0; transform: scaleX(0); }
+            50% { opacity: 0.8; transform: scaleX(1); }
+            100% { opacity: 0; transform: scaleX(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         .controls {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            padding: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
             display: flex;
             gap: 15px;
             align-items: center;
             flex-wrap: wrap;
             justify-content: center;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             max-width: 90vw;
+            z-index: 10;
+            position: relative;
         }
 
         #wordInput {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
             padding: 12px 16px;
-            color: white;
+            color: #e0e6ed;
             font-size: 16px;
-            width: 300px;
+            width: 350px;
             max-width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        #wordInput:focus {
+            outline: none;
+            border-color: #64ffda;
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.3);
         }
 
         #wordInput::placeholder {
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.5);
         }
 
-        #addWords, #clearMap {
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        #addWords, #clearCloud {
+            background: linear-gradient(45deg, #64ffda, #00bcd4);
             border: none;
             border-radius: 8px;
-            padding: 12px 20px;
-            color: white;
+            padding: 12px 24px;
+            color: #0a0a0a;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 14px;
         }
 
-        #clearMap {
+        #clearCloud {
             background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            color: white;
         }
 
-        #addWords:hover, #clearMap:hover {
+        #addWords:hover, #clearCloud:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 25px rgba(100, 255, 218, 0.4);
         }
 
         .word-count {
@@ -86,98 +137,137 @@
             font-weight: 500;
         }
 
+        .cloud-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 40px;
+            min-height: 500px;
+            width: 100%;
+            max-width: 1200px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        .word-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 12px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            position: relative;
+            animation: fadeIn 0.5s ease-in-out;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .word-item:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(100, 255, 218, 0.3);
+            border-color: rgba(100, 255, 218, 0.5);
+        }
+
+        .empty-state {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 18px;
+            font-style: italic;
+            text-align: center;
+            width: 100%;
+        }
+
         .info {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 10;
+            bottom: 30px;
+            right: 30px;
             background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
             color: rgba(255, 255, 255, 0.8);
             padding: 15px;
             border-radius: 10px;
             font-size: 12px;
             max-width: 250px;
-        }
-
-        .status {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 10;
-            background: rgba(0, 100, 0, 0.7);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 12px;
-            display: none;
-        }
-
-        .status.error {
-            background: rgba(200, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 20;
         }
 
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
-                padding: 15px;
+                padding: 20px;
+                width: 100%;
             }
 
             #wordInput {
                 width: 100%;
             }
 
+            .cloud-container {
+                padding: 20px;
+                margin: 10px;
+            }
+
             .info {
-                bottom: 10px;
-                right: 10px;
-                left: 10px;
+                position: relative;
+                bottom: auto;
+                right: auto;
+                margin-top: 20px;
                 max-width: none;
             }
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas"></canvas>
-    
+    <div class="neural-network" id="neuralNetwork"></div>
+
     <div class="controls">
         <input type="text" id="wordInput" placeholder="Enter words (space or comma separated)" />
         <button id="addWords">Add Words</button>
-        <button id="clearMap">Clear Map</button>
+        <button id="clearCloud">Clear Cloud</button>
         <div class="word-count">Words: <span id="wordCount">0</span></div>
     </div>
 
-    <div class="info">
-        Words drift and connect based on similarity. Click and drag to interact. Data persists via simple file hosting.
+    <div class="cloud-container" id="cloudContainer">
+        <div class="empty-state">Enter words above or use URL with ?words=your,words,here</div>
     </div>
 
-    <div class="status" id="status"></div>
+    <div class="info">
+        Word size represents frequency. Hover to highlight. Perfect for presentations and consensus visualization.
+    </div>
 
     <script>
-        class WordMap {
+        class WordCloud {
             constructor() {
-                this.canvas = document.getElementById('canvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.words = [];
-                this.mouse = { x: 0, y: 0 };
-                this.draggedWord = null;
+                this.words = new Map();
                 this.colors = [
                     '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
-                    '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9'
+                    '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9',
+                    '#ff8a80', '#80cbc4', '#81c784', '#ffb74d', '#f48fb1'
                 ];
                 
-                this.resize();
                 this.init();
-                this.animate();
-                
-                window.addEventListener('resize', () => this.resize());
-                this.setupEvents();
+                this.createNeuralNetwork();
             }
 
-            resize() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-            }
-
-            async init() {
+            init() {
                 document.getElementById('addWords').addEventListener('click', () => {
                     this.addWords();
                 });
@@ -188,146 +278,48 @@
                     }
                 });
                 
-                document.getElementById('clearMap').addEventListener('click', () => {
-                    this.clearMap();
+                document.getElementById('clearCloud').addEventListener('click', () => {
+                    this.clearCloud();
                 });
 
-                // Load existing words first
-                await this.loadWords();
-
-                // Then check for URL parameters (these will override stored words)
                 this.checkURLParams();
+                this.renderCloud();
             }
 
-            async checkURLParams() {
+            checkURLParams() {
                 const urlParams = new URLSearchParams(window.location.search);
                 const wordsParam = urlParams.get('words');
                 if (wordsParam) {
-                    // Parse words more carefully to preserve phrases in quotes
                     const rawInput = decodeURIComponent(wordsParam);
                     const allWords = this.parseWordsAndPhrases(rawInput);
                     
-                    // Count word frequencies
-                    const wordCounts = {};
+                    this.words.clear();
                     allWords.forEach(word => {
-                        const text = word.toLowerCase();
-                        wordCounts[text] = (wordCounts[text] || 0) + 1;
+                        const text = word.toLowerCase().trim();
+                        if (text) {
+                            this.words.set(text, (this.words.get(text) || 0) + 1);
+                        }
                     });
                     
-                    // Clear existing words and create new ones with counts
-                    this.words = [];
-                    Object.keys(wordCounts).forEach(text => {
-                        this.createWordWithCount(text, wordCounts[text]);
-                    });
-                    
-                    this.updateWordCount();
-                    await this.saveWords();
-                    
-                    // Clear the URL parameters
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
 
-            setupEvents() {
-                this.canvas.addEventListener('mousedown', (e) => {
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.mouse.x = e.clientX - rect.left;
-                    this.mouse.y = e.clientY - rect.top;
-                    
-                    this.draggedWord = this.getWordAtPosition(this.mouse.x, this.mouse.y);
-                });
-
-                this.canvas.addEventListener('mousemove', (e) => {
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.mouse.x = e.clientX - rect.left;
-                    this.mouse.y = e.clientY - rect.top;
-                    
-                    if (this.draggedWord) {
-                        this.draggedWord.x = this.mouse.x;
-                        this.draggedWord.y = this.mouse.y;
-                        this.draggedWord.vx = 0;
-                        this.draggedWord.vy = 0;
-                    }
-                });
-
-                this.canvas.addEventListener('mouseup', () => {
-                    this.draggedWord = null;
-                });
-
-                // Touch events for mobile
-                this.canvas.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    const rect = this.canvas.getBoundingClientRect();
-                    this.mouse.x = touch.clientX - rect.left;
-                    this.mouse.y = touch.clientY - rect.top;
-                    
-                    this.draggedWord = this.getWordAtPosition(this.mouse.x, this.mouse.y);
-                });
-
-                this.canvas.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    if (this.draggedWord && e.touches[0]) {
-                        const touch = e.touches[0];
-                        const rect = this.canvas.getBoundingClientRect();
-                        this.mouse.x = touch.clientX - rect.left;
-                        this.mouse.y = touch.clientY - rect.top;
-                        
-                        this.draggedWord.x = this.mouse.x;
-                        this.draggedWord.y = this.mouse.y;
-                        this.draggedWord.vx = 0;
-                        this.draggedWord.vy = 0;
-                    }
-                });
-
-                this.canvas.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.draggedWord = null;
-                });
-            }
-
-            getWordAtPosition(x, y) {
-                for (let word of this.words) {
-                    const distance = Math.sqrt((x - word.x) ** 2 + (y - word.y) ** 2);
-                    if (distance < word.radius + 10) {
-                        return word;
-                    }
-                }
-                return null;
-            }
-
-            async addWords() {
+            addWords() {
                 const input = document.getElementById('wordInput').value.trim();
                 if (!input) return;
 
                 const newWords = this.parseWordsAndPhrases(input);
                 
-                // Count word frequencies (including existing words)
-                const wordCounts = {};
-                
-                // Count existing words
-                this.words.forEach(word => {
-                    const text = word.text.toLowerCase();
-                    wordCounts[text] = (wordCounts[text] || 0) + 1;
-                });
-                
-                // Count new words
                 newWords.forEach(word => {
-                    const text = word.toLowerCase();
-                    wordCounts[text] = (wordCounts[text] || 0) + 1;
-                });
-                
-                // Recreate all words with updated counts
-                this.words = [];
-                Object.keys(wordCounts).forEach(text => {
-                    this.createWordWithCount(text, wordCounts[text]);
+                    const text = word.toLowerCase().trim();
+                    if (text) {
+                        this.words.set(text, (this.words.get(text) || 0) + 1);
+                    }
                 });
 
                 document.getElementById('wordInput').value = '';
-                this.updateWordCount();
-                
-                // Save words after adding
-                await this.saveWords();
+                this.renderCloud();
             }
 
             parseWordsAndPhrases(input) {
@@ -341,23 +333,19 @@
                     if (char === '"') {
                         inQuotes = !inQuotes;
                         if (!inQuotes && current.trim()) {
-                            // End of quoted phrase
                             words.push(current.trim());
                             current = '';
                         }
                     } else if (!inQuotes && (char === ',' || char === ' ' || char === '\n')) {
-                        // Separator outside quotes
                         if (current.trim()) {
                             words.push(current.trim());
                             current = '';
                         }
                     } else if (char !== '\r') {
-                        // Regular character (skip carriage returns)
                         current += char;
                     }
                 }
                 
-                // Add the last word/phrase
                 if (current.trim()) {
                     words.push(current.trim());
                 }
@@ -365,387 +353,96 @@
                 return words.filter(word => word.length > 0);
             }
 
-            createWordWithCount(text, count) {
-                // Size and radius based on frequency, not word length
-                const baseSize = 18;
-                const maxSize = 48;
-                const size = Math.min(maxSize, baseSize + (count - 1) * 8);
-                
-                const baseRadius = 50;
-                const maxRadius = 120;
-                const radius = Math.min(maxRadius, baseRadius + (count - 1) * 15);
-                
-                // Enhanced color system with intensity based on frequency
-                const baseColor = this.colors[Math.floor(Math.random() * this.colors.length)];
-                const enhancedColor = this.enhanceColorByFrequency(baseColor, count);
-                
-                const word = {
-                    text: text,
-                    count: count, // Store the count for reference
-                    x: Math.random() * (this.canvas.width - 300) + 150,
-                    y: Math.random() * (this.canvas.height - 400) + 200, // Start below control panel
-                    vx: (Math.random() - 0.5) * 0.8,
-                    vy: (Math.random() - 0.5) * 0.8,
-                    color: enhancedColor,
-                    baseColor: baseColor, // Store original for reference
-                    size: size,
-                    radius: radius,
-                    opacity: 1,
-                    pulsePhase: Math.random() * Math.PI * 2
-                };
-                this.words.push(word);
+            clearCloud() {
+                this.words.clear();
+                this.renderCloud();
             }
 
-            enhanceColorByFrequency(baseColor, count) {
-                if (count === 1) return baseColor;
-                
-                // Convert hex to HSL for better color manipulation
-                const hsl = this.hexToHsl(baseColor);
-                
-                // Increase saturation and adjust lightness based on frequency
-                const saturationBoost = Math.min(0.3, (count - 1) * 0.1); // Up to 30% more saturated
-                const lightnessAdjust = Math.min(0.15, (count - 1) * 0.05); // Slightly brighter
-                
-                hsl.s = Math.min(1, hsl.s + saturationBoost);
-                hsl.l = Math.min(0.85, hsl.l + lightnessAdjust); // Don't make it too bright
-                
-                return this.hslToHex(hsl.h, hsl.s, hsl.l);
+            calculateFontSize(count, maxCount) {
+                const minSize = 24;
+                const maxSize = 84;
+                const ratio = count / maxCount;
+                return Math.max(minSize, minSize + (maxSize - minSize) * ratio);
             }
 
-            hexToHsl(hex) {
-                // Convert hex to RGB first
-                const r = parseInt(hex.slice(1, 3), 16) / 255;
-                const g = parseInt(hex.slice(3, 5), 16) / 255;
-                const b = parseInt(hex.slice(5, 7), 16) / 255;
+            getRandomColor() {
+                return this.colors[Math.floor(Math.random() * this.colors.length)];
+            }
 
-                const max = Math.max(r, g, b);
-                const min = Math.min(r, g, b);
-                let h, s, l = (max + min) / 2;
+            renderCloud() {
+                const container = document.getElementById('cloudContainer');
+                const wordCount = Array.from(this.words.values()).reduce((sum, count) => sum + count, 0);
+                
+                document.getElementById('wordCount').textContent = wordCount;
 
-                if (max === min) {
-                    h = s = 0; // achromatic
-                } else {
-                    const d = max - min;
-                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                    switch (max) {
-                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                        case g: h = (b - r) / d + 2; break;
-                        case b: h = (r - g) / d + 4; break;
-                    }
-                    h /= 6;
+                if (this.words.size === 0) {
+                    container.innerHTML = '<div class="empty-state">Enter words above or use URL with ?words=your,words,here</div>';
+                    return;
                 }
 
-                return { h, s, l };
-            }
-
-            hslToHex(h, s, l) {
-                const hue2rgb = (p, q, t) => {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1/6) return p + (q - p) * 6 * t;
-                    if (t < 1/2) return q;
-                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                    return p;
-                };
-
-                let r, g, b;
-
-                if (s === 0) {
-                    r = g = b = l; // achromatic
-                } else {
-                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                    const p = 2 * l - q;
-                    r = hue2rgb(p, q, h + 1/3);
-                    g = hue2rgb(p, q, h);
-                    b = hue2rgb(p, q, h - 1/3);
-                }
-
-                const toHex = (c) => {
-                    const hex = Math.round(c * 255).toString(16);
-                    return hex.length === 1 ? '0' + hex : hex;
-                };
-
-                return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-            }
-
-            createWord(text) {
-                // Default to count of 1 for single word creation
-                this.createWordWithCount(text, 1);
-            }
-
-            async clearMap() {
-                this.words = [];
-                this.updateWordCount();
-                await this.saveWords();
-            }
-
-            updateWordCount() {
-                document.getElementById('wordCount').textContent = this.words.length;
-            }
-
-            showStatus(message, isError = false) {
-                const status = document.getElementById('status');
-                status.textContent = message;
-                status.className = 'status' + (isError ? ' error' : '');
-                status.style.display = 'block';
+                const maxCount = Math.max(...this.words.values());
                 
-                setTimeout(() => {
-                    status.style.display = 'none';
-                }, 3000);
-            }
-
-            async loadWords() {
-                // For now, just use the URL-based approach without persistence
-                // This avoids the token authentication issues entirely
-                console.log('Loading words from simple storage...');
-                this.showStatus('Word map loaded');
-            }
-
-            async saveWords() {
-                // For now, just log the save attempt
-                const wordsList = this.words.map(word => word.text);
-                console.log('Would save words:', wordsList);
-                this.showStatus('Words updated');
-            }
-
-            calculateSimilarity(word1, word2) {
-                const text1 = word1.text.toLowerCase();
-                const text2 = word2.text.toLowerCase();
-                
-                // If it's the exact same word, maximum similarity
-                if (text1 === text2) return 1.0;
-                
-                // Semantic clustering - group words by business/conceptual themes
-                const businessClusters = {
-                    leadership: ['leadership', 'leader', 'management', 'executive', 'director', 'ceo', 'manager', 'supervisor', 'chief', 'governance'],
-                    innovation: ['innovation', 'creative', 'creativity', 'invention', 'breakthrough', 'novel', 'pioneering', 'disruptive', 'new', 'ideas'],
-                    collaboration: ['collaboration', 'teamwork', 'cooperation', 'partnership', 'unity', 'together', 'collective', 'shared', 'joint', 'community'],
-                    strategy: ['strategy', 'strategic', 'planning', 'vision', 'roadmap', 'goals', 'objectives', 'mission', 'direction', 'purpose'],
-                    technology: ['technology', 'tech', 'software', 'hardware', 'systems', 'infrastructure', 'platform', 'tools', 'solution'],
-                    digital: ['digital', 'digitalization', 'digitization', 'online', 'virtual', 'cloud', 'platform', 'ecosystem', 'connectivity', 'internet', 'web', 'mobile', 'app', 'saas'],
-                    digitaltransformation: ['transformation', 'change', 'evolution', 'modernization', 'upgrade', 'migration', 'adoption', 'implementation', 'transition', 'reform', 'revolution'],
-                    ai: ['ai', 'artificial', 'intelligence', 'machine', 'learning', 'ml', 'deep', 'neural', 'network', 'algorithm', 'model', 'training', 'prediction'],
-                    llm: ['llm', 'gpt', 'chatgpt', 'claude', 'gemini', 'copilot', 'assistant', 'chatbot', 'conversational', 'generative', 'prompt', 'nlp', 'language'],
-                    data: ['data', 'analytics', 'insights', 'metrics', 'kpi', 'dashboard', 'reporting', 'visualization', 'business', 'intelligence', 'bi', 'statistics'],
-                    automation: ['automation', 'automated', 'robotic', 'rpa', 'workflow', 'process', 'efficiency', 'optimization', 'streamline', 'robotics'],
-                    customer: ['customer', 'client', 'user', 'consumer', 'buyer', 'audience', 'market', 'service', 'experience', 'satisfaction', 'journey'],
-                    culture: ['culture', 'values', 'beliefs', 'mindset', 'attitude', 'behavior', 'environment', 'workplace', 'community', 'engagement'],
-                    agile: ['agile', 'flexible', 'adaptive', 'responsive', 'quick', 'fast', 'iterative', 'sprint', 'scrum', 'kanban', 'lean'],
-                    quality: ['quality', 'excellence', 'standards', 'performance', 'efficiency', 'effectiveness', 'optimization', 'improvement', 'best', 'practices'],
-                    cybersecurity: ['security', 'cybersecurity', 'privacy', 'protection', 'risk', 'compliance', 'governance', 'threat', 'vulnerability', 'encryption'],
-                    sustainability: ['sustainability', 'sustainable', 'green', 'environment', 'esg', 'carbon', 'renewable', 'responsible', 'ethical', 'impact']
-                };
-                
-                // Check if both words belong to the same cluster
-                for (const [cluster, words] of Object.entries(businessClusters)) {
-                    const word1InCluster = words.some(w => text1.includes(w) || w.includes(text1));
-                    const word2InCluster = words.some(w => text2.includes(w) || w.includes(text2));
-                    
-                    if (word1InCluster && word2InCluster) {
-                        return 0.8; // High similarity for same semantic cluster
-                    }
-                }
-                
-                // Related clusters - some concepts naturally connect
-                const relatedClusters = {
-                    leadership: ['strategy', 'digitaltransformation', 'culture', 'innovation'],
-                    innovation: ['technology', 'digitaltransformation', 'agile', 'ai', 'digital'],
-                    collaboration: ['culture', 'agile', 'digital', 'automation'],
-                    strategy: ['leadership', 'digitaltransformation', 'customer', 'innovation'],
-                    technology: ['innovation', 'digitaltransformation', 'agile', 'digital', 'ai', 'automation'],
-                    digital: ['digitaltransformation', 'technology', 'ai', 'llm', 'data', 'automation', 'customer'],
-                    digitaltransformation: ['leadership', 'innovation', 'strategy', 'technology', 'digital', 'ai', 'culture'],
-                    ai: ['innovation', 'technology', 'digital', 'llm', 'data', 'automation'],
-                    llm: ['ai', 'digital', 'technology', 'innovation', 'automation'],
-                    data: ['ai', 'digital', 'technology', 'quality', 'customer', 'llm'],
-                    automation: ['technology', 'digital', 'ai', 'agile', 'quality', 'collaboration'],
-                    customer: ['strategy', 'quality', 'culture', 'digital', 'data'],
-                    culture: ['leadership', 'collaboration', 'customer', 'digitaltransformation', 'agile'],
-                    agile: ['innovation', 'technology', 'collaboration', 'digitaltransformation', 'automation'],
-                    quality: ['customer', 'digitaltransformation', 'agile', 'data', 'automation'],
-                    cybersecurity: ['technology', 'digital', 'ai', 'data', 'quality'],
-                    sustainability: ['strategy', 'culture', 'innovation', 'digitaltransformation', 'quality']
-                };
-                
-                // Check for related cluster connections
-                for (const [mainCluster, relatedList] of Object.entries(relatedClusters)) {
-                    const word1InMain = businessClusters[mainCluster]?.some(w => text1.includes(w) || w.includes(text1));
-                    
-                    if (word1InMain) {
-                        for (const relatedCluster of relatedList) {
-                            const word2InRelated = businessClusters[relatedCluster]?.some(w => text2.includes(w) || w.includes(text2));
-                            if (word2InRelated) {
-                                return 0.4; // Moderate similarity for related concepts
-                            }
-                        }
-                    }
-                }
-                
-                // Fallback to character similarity (much reduced influence)
-                let commonChars = 0;
-                for (let char of text1) {
-                    if (text2.includes(char)) commonChars++;
-                }
-                
-                const maxLength = Math.max(text1.length, text2.length);
-                const charSimilarity = commonChars / maxLength;
-                
-                // Only use character similarity if it's quite high, and reduce its impact
-                return charSimilarity > 0.7 ? charSimilarity * 0.3 : 0;
-            }
-
-            animate() {
-                // Clear the entire canvas for crisp, clean rendering
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-                // Draw connections
-                this.words.forEach((word1, i) => {
-                    this.words.slice(i + 1).forEach(word2 => {
-                        const distance = Math.sqrt((word1.x - word2.x) ** 2 + (word1.y - word2.y) ** 2);
-                        const similarity = this.calculateSimilarity(word1, word2);
-                        
-                        if (similarity > 0.3 && distance < 300) {
-                            const opacity = (similarity * 0.5) * (1 - distance / 300);
-                            this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                            this.ctx.lineWidth = similarity * 2;
-                            this.ctx.beginPath();
-                            this.ctx.moveTo(word1.x, word1.y);
-                            this.ctx.lineTo(word2.x, word2.y);
-                            this.ctx.stroke();
-                        }
-                    });
+                const sortedWords = Array.from(this.words.entries()).sort((a, b) => {
+                    if (b[1] !== a[1]) return b[1] - a[1];
+                    return a[0].localeCompare(b[0]);
                 });
 
-                // Update and draw words
-                this.words.forEach((word, index) => {
-                    // Update position if not being dragged
-                    if (word !== this.draggedWord) {
-                        word.x += word.vx;
-                        word.y += word.vy;
+                const wordElements = sortedWords.map(([word, count]) => {
+                    const fontSize = this.calculateFontSize(count, maxCount);
+                    const color = this.getRandomColor();
+                    
+                    return `
+                        <span 
+                            class="word-item" 
+                            style="
+                                font-size: ${fontSize}px; 
+                                color: #ffffff;
+                                background: ${color}25;
+                                border-color: ${color}40;
+                                text-shadow: 0 0 20px ${color}60;
+                            "
+                            title="${word} (appears ${count} time${count > 1 ? 's' : ''})"
+                        >
+                            ${word}
+                        </span>
+                    `;
+                }).join('');
 
-                        // Soft bounce off edges with more space AND avoid control panel
-                        const margin = word.radius + 20;
-                        const topMargin = 120; // Extra space for control panel
-                        
-                        if (word.x < margin) {
-                            word.vx = Math.abs(word.vx) * 0.7;
-                            word.x = margin;
-                        }
-                        if (word.x > this.canvas.width - margin) {
-                            word.vx = -Math.abs(word.vx) * 0.7;
-                            word.x = this.canvas.width - margin;
-                        }
-                        if (word.y < topMargin) {
-                            word.vy = Math.abs(word.vy) * 0.7;
-                            word.y = topMargin;
-                        }
-                        if (word.y > this.canvas.height - margin) {
-                            word.vy = -Math.abs(word.vy) * 0.7;
-                            word.y = this.canvas.height - margin;
-                        }
+                container.innerHTML = wordElements;
 
-                        // Add gentle center pull to keep words floating around (but below control panel)
-                        const centerX = this.canvas.width / 2;
-                        const centerY = (this.canvas.height + 120) / 2; // Center point below control panel
-                        const centerDistance = Math.sqrt((word.x - centerX) ** 2 + (word.y - centerY) ** 2);
-                        const maxDistance = Math.min(this.canvas.width, this.canvas.height - 120) * 0.4;
-                        
-                        if (centerDistance > maxDistance) {
-                            const centerPull = 0.0005;
-                            word.vx += (centerX - word.x) / centerDistance * centerPull;
-                            word.vy += (centerY - word.y) / centerDistance * centerPull;
-                        }
-
-                        // Gentle drift and attraction/repulsion
-                        this.words.forEach((other, otherIndex) => {
-                            if (index !== otherIndex) {
-                                const dx = other.x - word.x;
-                                const dy = other.y - word.y;
-                                const distance = Math.sqrt(dx * dx + dy * dy);
-                                const minDistance = word.radius + other.radius + 20; // Minimum safe distance
-                                
-                                if (distance > 0) {
-                                    const similarity = this.calculateSimilarity(word, other);
-                                    
-                                    // Collision avoidance - strong repulsion when too close
-                                    if (distance < minDistance) {
-                                        const pushForce = (minDistance - distance) * 0.002;
-                                        word.vx -= (dx / distance) * pushForce;
-                                        word.vy -= (dy / distance) * pushForce;
-                                    }
-                                    // Gentle attraction for similar words (but not too close)
-                                    else if (similarity > 0.4 && distance < 250) {
-                                        const attractForce = similarity * 0.00005;
-                                        word.vx += (dx / distance) * attractForce;
-                                        word.vy += (dy / distance) * attractForce;
-                                    }
-                                    // Gentle repulsion for different words
-                                    else if (similarity <= 0.4 && distance < 180) {
-                                        const repelForce = (1 - similarity) * 0.0001;
-                                        word.vx -= (dx / distance) * repelForce;
-                                        word.vy -= (dy / distance) * repelForce;
-                                    }
-                                }
-                            }
-                        });
-
-                        // Add gentle orbital movement to prevent complete stillness
-                        word.vx += Math.sin(Date.now() * 0.0002 + index) * 0.0005;
-                        word.vy += Math.cos(Date.now() * 0.0002 + index) * 0.0005;
-
-                        // Gentle friction
-                        word.vx *= 0.998;
-                        word.vy *= 0.998;
-
-                        // Minimum movement with collision-aware adjustment
-                        const speed = Math.sqrt(word.vx * word.vx + word.vy * word.vy);
-                        if (speed < 0.005) {
-                            // Add slight movement in a direction away from nearby words
-                            let pushX = 0, pushY = 0;
-                            this.words.forEach(other => {
-                                if (other !== word) {
-                                    const dx = word.x - other.x;
-                                    const dy = word.y - other.y;
-                                    const distance = Math.sqrt(dx * dx + dy * dy);
-                                    if (distance < 150) {
-                                        pushX += dx / distance * 0.01;
-                                        pushY += dy / distance * 0.01;
-                                    }
-                                }
-                            });
-                            
-                            word.vx += pushX + (Math.random() - 0.5) * 0.01;
-                            word.vy += pushY + (Math.random() - 0.5) * 0.01;
-                        }
-                    }
-
-                    // Update pulse
-                    word.pulsePhase += 0.02;
-                    const pulse = Math.sin(word.pulsePhase) * 0.1 + 1;
-
-                    // Draw word background
-                    this.ctx.fillStyle = word.color;
-                    this.ctx.globalAlpha = 0.3 * pulse;
-                    this.ctx.beginPath();
-                    this.ctx.arc(word.x, word.y, word.radius * pulse, 0, Math.PI * 2);
-                    this.ctx.fill();
-
-                    // Draw word text
-                    this.ctx.globalAlpha = word.opacity;
-                    this.ctx.fillStyle = 'white';
-                    this.ctx.font = `bold ${word.size * pulse}px -apple-system, BlinkMacSystemFont, sans-serif`;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.textBaseline = 'middle';
-                    this.ctx.fillText(word.text, word.x, word.y);
+                const items = container.querySelectorAll('.word-item');
+                items.forEach((item, index) => {
+                    item.style.animationDelay = `${index * 0.1}s`;
                 });
+            }
 
-                this.ctx.globalAlpha = 1;
-                requestAnimationFrame(() => this.animate());
+            createNeuralNetwork() {
+                const network = document.getElementById('neuralNetwork');
+                const nodeCount = 20;
+                
+                for (let i = 0; i < nodeCount; i++) {
+                    const node = document.createElement('div');
+                    node.className = 'node';
+                    node.style.left = Math.random() * 100 + '%';
+                    node.style.top = Math.random() * 100 + '%';
+                    node.style.animationDelay = Math.random() * 4 + 's';
+                    network.appendChild(node);
+                }
+                
+                for (let i = 0; i < 10; i++) {
+                    const connection = document.createElement('div');
+                    connection.className = 'connection';
+                    connection.style.left = Math.random() * 90 + '%';
+                    connection.style.top = Math.random() * 100 + '%';
+                    connection.style.width = (Math.random() * 200 + 100) + 'px';
+                    connection.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    connection.style.animationDelay = Math.random() * 3 + 's';
+                    network.appendChild(connection);
+                }
             }
         }
 
-        // Initialize the word map
-        new WordMap();
+        new WordCloud();
     </script>
 </body>
 </html>
