@@ -1,402 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Word Cloud</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dynamic Word Cloud — AI Theme</title>
+  <!-- If you saved theme.css from my earlier message, keep this link. Otherwise this file is self-contained. -->
+  <!-- <link rel="stylesheet" href="theme.css" /> -->
+  <style>
+    /* =========================
+       THEME TOKENS (inline copy)
+       ========================= */
+    :root{
+      --color-primary: #64ffda;
+      --color-primary-2: #00bcd4;
+      --color-bg-0: #0a0a0a;
+      --color-bg-1: #1a1a2e;
+      --color-bg-2: #16213e;
+      --color-bg-3: #0f3460;
+      --color-bg-4: #533a7d;
+      --color-text: #e0e6ed;
+      --color-white-10: rgba(255,255,255,.1);
+      --color-white-05: rgba(255,255,255,.05);
 
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
+      --glass-bg: rgba(255,255,255,0.05);
+      --glass-border: rgba(255,255,255,0.1);
+      --glass-blur: 20px;
 
-        .controls {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            max-width: 90vw;
-        }
+      --font-sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
 
-        #wordInput {
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-size: 16px;
-            width: 350px;
-            max-width: 100%;
-            transition: border-color 0.3s ease;
-        }
+      --radius-xl: 24px;
+      --pad-lg: 24px; /* tighter for cloud layout */
+      --shadow-elev: 0 32px 64px rgba(0,0,0,.4);
+    }
 
-        #wordInput:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+    /* App background + viewport discipline */
+    html, body { height: 100%; }
+    body.theme-ai {
+      margin: 0;
+      background: linear-gradient(135deg,
+        var(--color-bg-0) 0%, var(--color-bg-1) 25%, var(--color-bg-2) 50%, var(--color-bg-3) 75%, var(--color-bg-4) 100%);
+      font-family: var(--font-sans);
+      color: var(--color-text);
+      /* Safari full-screen friendly viewport units */
+      min-height: 100svh; /* small viewport height, better with iOS UI */
+      height: 100svh;
+      width: 100vw;
+      overflow: hidden; /* ✱ no page scroll */
+      display: grid;
+      /* Layout: nav top-left fixed; info bottom-right fixed; main centered */
+      place-items: center;
+      position: relative;
+    }
 
-        #wordInput::placeholder {
-            color: #999;
-        }
+    /* Neural background */
+    .neural-network{ position:absolute; inset:0; pointer-events:none; opacity:.1; }
+    .nn-node{ position:absolute; width:3px; height:3px; background: var(--color-primary); border-radius:50%; animation: nnPulse 4s ease-in-out infinite; }
+    .nn-conn{ position:absolute; height:1px; background: linear-gradient(90deg, transparent, var(--color-primary), transparent); transform-origin:left center; animation: nnFlow 3s ease-in-out infinite; }
+    @keyframes nnPulse{ 0%,100%{opacity:.3; transform:scale(1)} 50%{opacity:1; transform:scale(1.5)} }
+    @keyframes nnFlow{ 0%{opacity:0; transform:scaleX(0)} 50%{opacity:.8; transform:scaleX(1)} 100%{opacity:0; transform:scaleX(0)} }
 
-        #addWords, #clearCloud {
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
+    /* Nav pills */
+    .nav-pills{ position: fixed; top: 20px; left: 20px; display:flex; gap:12px; z-index: 20; }
+    .nav-pills a{
+      background: var(--glass-bg); backdrop-filter: blur(10px);
+      color: var(--color-text); padding:10px 16px; border-radius:25px; text-decoration:none;
+      font-weight:500; font-size:14px; border:1px solid var(--glass-border); transition:.3s;
+    }
+    .nav-pills a:hover{ background: rgba(100,255,218,.2); border-color: rgba(100,255,218,.3); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(100,255,218,.2); }
 
-        #clearCloud {
-            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
-        }
+    /* Info chip */
+    .ts-info{ position:fixed; bottom:20px; right:20px; z-index:20; color: rgba(255,255,255,.85); font-size:12px; background: var(--glass-bg); padding:10px 14px; border-radius:12px; backdrop-filter: blur(10px); max-width: 320px; }
 
-        #addWords:hover, #clearCloud:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
+    /* Main card */
+    .card-glass{
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      border:1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      padding: var(--pad-lg);
+      width: min(1200px, 92vw);
+      height: min(80svh, 720px); /* keep within one screen */
+      box-shadow: var(--shadow-elev), inset 0 1px 0 var(--glass-border);
+      display: grid;
+      grid-template-rows: auto 1fr; /* controls + cloud */
+      gap: 16px;
+      position: relative;
+      z-index: 10;
+    }
 
-        .word-count {
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-        }
+    /* Controls bar */
+    .controls{
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .controls-inner{
+      display:flex; gap:12px; align-items:center; flex-wrap: wrap;
+    }
 
-        .cloud-container {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            min-height: 500px;
-            width: 100%;
-            max-width: 1200px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            position: relative;
-            overflow: hidden;
-        }
+    input#wordInput{
+      border:1px solid var(--color-white-10); border-radius: 10px; padding: 10px 14px; font-size: 16px; width: 100%;
+      background: rgba(255,255,255,.06); color: var(--color-text);
+    }
+    input#wordInput::placeholder{ color: #9fb2c4; }
+    input#wordInput:focus{ outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(100,255,218,.18); }
 
-        .word-item {
-            display: inline-block;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            border-radius: 25px;
-            text-decoration: none;
-            position: relative;
-            animation: fadeIn 0.5s ease-in-out;
-        }
+    .btn{
+      background: linear-gradient(45deg, var(--color-primary), var(--color-primary-2));
+      border: none; border-radius: 10px; padding: 10px 16px; color: #0a0a0a; font-weight: 700; cursor: pointer; transition:.25s; font-size: 14px;
+    }
+    .btn:hover{ transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+    .btn.alt{ background: linear-gradient(45deg, #b57bff, #ff77aa); color:#0a0a0a; }
 
-        .word-item:hover {
-            transform: scale(1.1);
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-        }
+    .word-count{ font-size: 13px; opacity:.85; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.5); }
-            to { opacity: 1; transform: scale(1); }
-        }
+    /* Cloud area never forces page scroll; internal overflow auto if needed */
+    .cloud-container{
+      background: rgba(255,255,255,0.02);
+      border:1px dashed var(--color-white-10);
+      border-radius: 14px;
+      padding: 18px;
+      overflow: auto; /* internal scroll only if needed */
+      display: flex; align-items: flex-start; justify-content: center; flex-wrap: wrap; gap: 12px;
+    }
 
-        .info {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 12px;
-            max-width: 250px;
-        }
+    .word-item{
+      display:inline-block; font-weight: 800; cursor: pointer; transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+      padding: 6px 10px; border-radius: 999px; text-decoration: none; position: relative; will-change: transform;
+    }
+    .word-item:hover{ transform: scale(1.07); filter: saturate(1.2); }
 
-        .nav-links {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            gap: 10px;
-        }
+    .empty-state{ opacity:.7; font-style: italic; }
 
-        .nav-links a {
-            background: rgba(255, 255, 255, 0.9);
-            color: #667eea;
-            padding: 8px 16px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-
-        .nav-links a:hover {
-            background: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                padding: 20px;
-                width: 100%;
-            }
-
-            #wordInput {
-                width: 100%;
-            }
-
-            .cloud-container {
-                padding: 20px;
-                margin: 10px;
-            }
-
-            .nav-links {
-                position: relative;
-                top: auto;
-                left: auto;
-                margin-bottom: 20px;
-                justify-content: center;
-            }
-
-            .info {
-                position: relative;
-                bottom: auto;
-                right: auto;
-                margin-top: 20px;
-                max-width: none;
-            }
-        }
-
-        .empty-state {
-            color: #999;
-            font-size: 18px;
-            font-style: italic;
-            text-align: center;
-            width: 100%;
-        }
-    </style>
+    @media (max-width: 920px){
+      .card-glass{ width: 94vw; height: min(84svh, 760px); }
+      .controls{ grid-template-columns: 1fr; gap: 10px; }
+      .controls-inner{ flex-wrap: wrap; }
+    }
+  </style>
 </head>
-<body>
-    <div class="nav-links">
-        <a href="wordmap.html">Word Map</a>
-        <a href="wordcloud.html">Word Cloud</a>
-    </div>
+<body class="theme-ai">
+  <div id="neuralNetwork" class="neural-network" aria-hidden="true"></div>
 
+  <nav class="nav-pills">
+    <a href="wordmap.html">Word Map</a>
+    <a href="wordcloud.html">Word Cloud</a>
+  </nav>
+
+  <main class="card-glass">
     <div class="controls">
+      <div class="controls-inner">
         <input type="text" id="wordInput" placeholder="Enter words (space or comma separated)" />
-        <button id="addWords">Add Words</button>
-        <button id="clearCloud">Clear Cloud</button>
-        <div class="word-count">Words: <span id="wordCount">0</span></div>
+        <button class="btn" id="addWords">Add Words</button>
+        <button class="btn alt" id="clearCloud">Clear Cloud</button>
+      </div>
+      <div class="word-count">Words: <span id="wordCount">0</span></div>
     </div>
 
     <div class="cloud-container" id="cloudContainer">
-        <div class="empty-state">Enter words above or use URL with ?words=your,words,here</div>
+      <div class="empty-state">Enter words above or use URL with ?words=your,words,here</div>
     </div>
+  </main>
 
-    <div class="info">
-        Word size represents frequency. Hover to highlight. Perfect for presentations and consensus visualization.
-    </div>
+  <div class="ts-info">Word size reflects frequency. Page never scrolls; the cloud scrolls internally if needed.</div>
 
-    <script>
-        class WordCloud {
-            constructor() {
-                this.words = new Map(); // Use Map to store word counts
-                this.colors = [
-                    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
-                    '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9',
-                    '#ff8a80', '#80cbc4', '#81c784', '#ffb74d', '#f48fb1'
-                ];
-                
-                this.init();
-            }
+  <script>
+    // ====== Neural background mount (inline) ======
+    (function mountNeural(){
+      const el = document.getElementById('neuralNetwork');
+      if(!el) return;
+      const nodes = 20, connections = 10; const frag = document.createDocumentFragment();
+      for(let i=0;i<nodes;i++){ const n = document.createElement('div'); n.className='nn-node'; n.style.left=Math.random()*100+'%'; n.style.top=Math.random()*100+'%'; n.style.animationDelay=(Math.random()*4)+'s'; frag.appendChild(n); }
+      for(let i=0;i<connections;i++){ const c=document.createElement('div'); c.className='nn-conn'; c.style.left=(Math.random()*90)+'%'; c.style.top=(Math.random()*100)+'%'; c.style.width=(Math.random()*200+100)+'px'; c.style.transform=`rotate(${Math.random()*360}deg)`; c.style.animationDelay=(Math.random()*3)+'s'; frag.appendChild(c); }
+      el.appendChild(frag);
+    })();
 
-            init() {
-                document.getElementById('addWords').addEventListener('click', () => {
-                    this.addWords();
-                });
-                
-                document.getElementById('wordInput').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.addWords();
-                    }
-                });
-                
-                document.getElementById('clearCloud').addEventListener('click', () => {
-                    this.clearCloud();
-                });
-
-                // Check for URL parameters
-                this.checkURLParams();
-                this.renderCloud();
-            }
-
-            checkURLParams() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const wordsParam = urlParams.get('words');
-                if (wordsParam) {
-                    // Parse words more carefully to preserve phrases in quotes
-                    const rawInput = decodeURIComponent(wordsParam);
-                    const allWords = this.parseWordsAndPhrases(rawInput);
-                    
-                    // Count word frequencies
-                    this.words.clear();
-                    allWords.forEach(word => {
-                        const text = word.toLowerCase().trim();
-                        if (text) {
-                            this.words.set(text, (this.words.get(text) || 0) + 1);
-                        }
-                    });
-                    
-                    // Clear the URL parameters
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }
-            }
-
-            addWords() {
-                const input = document.getElementById('wordInput').value.trim();
-                if (!input) return;
-
-                const newWords = this.parseWordsAndPhrases(input);
-                
-                newWords.forEach(word => {
-                    const text = word.toLowerCase().trim();
-                    if (text) {
-                        this.words.set(text, (this.words.get(text) || 0) + 1);
-                    }
-                });
-
-                document.getElementById('wordInput').value = '';
-                this.renderCloud();
-            }
-
-            parseWordsAndPhrases(input) {
-                const words = [];
-                let current = '';
-                let inQuotes = false;
-                
-                for (let i = 0; i < input.length; i++) {
-                    const char = input[i];
-                    
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                        if (!inQuotes && current.trim()) {
-                            // End of quoted phrase
-                            words.push(current.trim());
-                            current = '';
-                        }
-                    } else if (!inQuotes && (char === ',' || char === ' ' || char === '\n')) {
-                        // Separator outside quotes
-                        if (current.trim()) {
-                            words.push(current.trim());
-                            current = '';
-                        }
-                    } else if (char !== '\r') {
-                        // Regular character (skip carriage returns)
-                        current += char;
-                    }
-                }
-                
-                // Add the last word/phrase
-                if (current.trim()) {
-                    words.push(current.trim());
-                }
-                
-                return words.filter(word => word.length > 0);
-            }
-
-            clearCloud() {
-                this.words.clear();
-                this.renderCloud();
-            }
-
-            calculateFontSize(count, maxCount) {
-                const minSize = 16;
-                const maxSize = 72;
-                const ratio = count / maxCount;
-                return Math.max(minSize, minSize + (maxSize - minSize) * ratio);
-            }
-
-            getRandomColor() {
-                return this.colors[Math.floor(Math.random() * this.colors.length)];
-            }
-
-            renderCloud() {
-                const container = document.getElementById('cloudContainer');
-                const wordCount = Array.from(this.words.values()).reduce((sum, count) => sum + count, 0);
-                
-                document.getElementById('wordCount').textContent = wordCount;
-
-                if (this.words.size === 0) {
-                    container.innerHTML = '<div class="empty-state">Enter words above or use URL with ?words=your,words,here</div>';
-                    return;
-                }
-
-                // Find max count for scaling
-                const maxCount = Math.max(...this.words.values());
-                
-                // Convert to array and sort by frequency (descending) then alphabetically
-                const sortedWords = Array.from(this.words.entries()).sort((a, b) => {
-                    if (b[1] !== a[1]) return b[1] - a[1]; // Sort by count first
-                    return a[0].localeCompare(b[0]); // Then alphabetically
-                });
-
-                // Create word elements
-                const wordElements = sortedWords.map(([word, count]) => {
-                    const fontSize = this.calculateFontSize(count, maxCount);
-                    const color = this.getRandomColor();
-                    
-                    return `
-                        <span 
-                            class="word-item" 
-                            style="
-                                font-size: ${fontSize}px; 
-                                color: ${color};
-                                background: ${color}15;
-                                border: 2px solid ${color}30;
-                            "
-                            title="${word} (appears ${count} time${count > 1 ? 's' : ''})"
-                        >
-                            ${word}
-                        </span>
-                    `;
-                }).join('');
-
-                container.innerHTML = wordElements;
-
-                // Add stagger animation
-                const items = container.querySelectorAll('.word-item');
-                items.forEach((item, index) => {
-                    item.style.animationDelay = `${index * 0.1}s`;
-                });
-            }
+    // ====== Word Cloud (aligned & viewport-safe) ======
+    class WordCloud {
+      constructor() {
+        this.words = new Map();
+        this.palette = [
+          '#64ffda', '#00bcd4', '#80deea', '#a7ffeb', '#b388ff', '#82b1ff', '#b2ff59', '#ffd54f'
+        ];
+        this.container = document.getElementById('cloudContainer');
+        this.countEl = document.getElementById('wordCount');
+        this.init();
+      }
+      init(){
+        document.getElementById('addWords').addEventListener('click', ()=>this.addWords());
+        document.getElementById('wordInput').addEventListener('keypress', (e)=>{ if(e.key==='Enter') this.addWords(); });
+        document.getElementById('clearCloud').addEventListener('click', ()=>this.clearCloud());
+        this.checkURLParams();
+        this.renderCloud();
+        // Enforce no page scroll at runtime too
+        document.documentElement.style.overflow = 'hidden';
+        window.addEventListener('resize', ()=>this.renderCloud());
+      }
+      checkURLParams(){
+        const params = new URLSearchParams(window.location.search);
+        const wordsParam = params.get('words');
+        if(wordsParam){
+          const all = this.parseWordsAndPhrases(decodeURIComponent(wordsParam));
+          this.words.clear();
+          all.forEach(w=>{ const t=w.toLowerCase().trim(); if(t) this.words.set(t,(this.words.get(t)||0)+1); });
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
+      }
+      addWords(){
+        const inputEl = document.getElementById('wordInput');
+        const input = inputEl.value.trim(); if(!input) return;
+        const list = this.parseWordsAndPhrases(input);
+        list.forEach(w=>{ const t=w.toLowerCase().trim(); if(t) this.words.set(t,(this.words.get(t)||0)+1); });
+        inputEl.value='';
+        this.renderCloud();
+      }
+      parseWordsAndPhrases(input){
+        const out=[]; let cur=''; let inQ=false;
+        for(let i=0;i<input.length;i++){
+          const ch=input[i];
+          if(ch==='"'){ inQ=!inQ; if(!inQ && cur.trim()){ out.push(cur.trim()); cur=''; } }
+          else if(!inQ && (ch===','||ch===' '||ch==='\n')){ if(cur.trim()){ out.push(cur.trim()); cur=''; } }
+          else if(ch!=='\r'){ cur+=ch; }
+        }
+        if(cur.trim()) out.push(cur.trim());
+        return out.filter(Boolean);
+      }
+      clearCloud(){ this.words.clear(); this.renderCloud(); }
+      calcFontSize(count, maxCount){
+        // size adapts to container to avoid forcing page scroll
+        const cw = this.container.clientWidth || window.innerWidth;
+        const ch = this.container.clientHeight || window.innerHeight;
+        // Base sizes scale with viewport; keep within readable bounds
+        let maxSize = Math.max(22, Math.min(Math.floor(cw/12), Math.floor(ch/7)));
+        let minSize = Math.max(12, Math.min(16, Math.floor(ch/40)));
+        const ratio = maxCount ? (count / maxCount) : 0.5;
+        return Math.max(minSize, Math.round(minSize + (maxSize - minSize) * ratio));
+      }
+      color(){ return this.palette[Math.floor(Math.random()*this.palette.length)]; }
+      renderCloud(){
+        const total = Array.from(this.words.values()).reduce((s,c)=>s+c,0);
+        this.countEl.textContent = total;
+        if(this.words.size===0){
+          this.container.innerHTML = '<div class="empty-state">Enter words above or use URL with ?words=your,words,here</div>';
+          return;
+        }
+        const maxCount = Math.max(...this.words.values());
+        const sorted = Array.from(this.words.entries()).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
 
-        // Initialize the word cloud
-        new WordCloud();
-    </script>
+        // Density control: if many tokens, slightly compress sizes
+        const density = sorted.length;
+        const densityFactor = density > 80 ? 0.75 : density > 40 ? 0.85 : 1;
+
+        const html = sorted.map(([w,c])=>{
+          const fs = Math.round(this.calcFontSize(c, maxCount) * densityFactor);
+          const col = this.color();
+          return `<span class="word-item" style="font-size:${fs}px;color:${col};background:${col}15;border:1px solid ${col}35" title="${w} (appears ${c} time${c>1?'s':''})">${w}</span>`;
+        }).join('');
+        this.container.innerHTML = html;
+
+        // Staggered animation via transition delay
+        this.container.querySelectorAll('.word-item').forEach((el,i)=>{ el.style.transitionDelay = `${i*8}ms`; });
+      }
+    }
+
+    new WordCloud();
+  </script>
 </body>
 </html>
