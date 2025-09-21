@@ -238,12 +238,6 @@
 <body>
     <div class="neural-network" id="neuralNetwork"></div>
     
-    <div class="nav-links">
-        <a href="wordmap.html">Word Map</a>
-        <a href="wordcloud.html">Word Cloud</a>
-        <a href="summary.html">Summary</a>
-    </div>
-
     <div class="main-container">
         <div class="ai-badge">
             <div class="ai-icon"></div>
@@ -345,7 +339,7 @@
                             hiddenSpans.splice(randomIndex, 1);
                         }
                     }
-                }, 120); // Reveal characters every 120ms
+                }, 85); // Reveal characters every 85ms (30% faster than 120ms)
             }
 
             createNeuralNetwork() {
