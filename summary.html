@@ -289,23 +289,41 @@
                 
                 // Reset text for typewriter effect
                 textElement.textContent = '';
-                textElement.style.whiteSpace = 'normal'; // Allow wrapping from the start
+                textElement.style.whiteSpace = 'normal';
                 textElement.style.borderRight = '3px solid #64ffda';
                 
+                // Use requestAnimationFrame for smoother animation
                 let i = 0;
-                const typeInterval = setInterval(() => {
-                    if (i < text.length) {
-                        textElement.textContent += text.charAt(i);
-                        i++;
-                    } else {
-                        clearInterval(typeInterval);
-                        // Complete the typewriter effect
-                        setTimeout(() => {
-                            textElement.classList.add('complete');
-                            textElement.style.borderRight = 'none';
-                        }, 800);
+                let lastTime = 0;
+                const charDelay = 35; // Slightly slower but smoother
+                
+                const typeChar = (currentTime) => {
+                    if (currentTime - lastTime >= charDelay) {
+                        if (i < text.length) {
+                            // Add multiple characters at once for smoother flow
+                            const charsToAdd = text.charAt(i) === ' ' ? 
+                                text.substring(i, Math.min(i + 3, text.length)) : // Add word chunks
+                                text.charAt(i); // Single character
+                            
+                            textElement.textContent += charsToAdd;
+                            i += charsToAdd.length;
+                            lastTime = currentTime;
+                        } else {
+                            // Animation complete
+                            setTimeout(() => {
+                                textElement.classList.add('complete');
+                                textElement.style.borderRight = 'none';
+                            }, 800);
+                            return;
+                        }
                     }
-                }, 25); // Faster typing - reduced from 50ms to 25ms
+                    
+                    if (i < text.length) {
+                        requestAnimationFrame(typeChar);
+                    }
+                };
+                
+                requestAnimationFrame(typeChar);
             }
 
             createNeuralNetwork() {
