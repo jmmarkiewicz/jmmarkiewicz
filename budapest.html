@@ -152,11 +152,13 @@
   .section-items {
     list-style: none; padding: 0;
   }
+  .section-items { padding-left: 24px; }
   .section-items li {
     font-size: 18px; line-height: 1.5; color: var(--ink);
     padding: 6px 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
   }
+  .section-items li::marker { color: var(--ink3); }
   .section-items li:last-child { border-bottom: none; }
 
   .action-box {
@@ -237,15 +239,15 @@ function renderGroup(key, data) {
   let html = '';
 
   if (data.reinforce.length) {
-    html += '<div class="section-label">3 Reinforce</div><ul class="section-items">';
+    html += '<div class="section-label">Reinforce</div><ol class="section-items">';
     data.reinforce.forEach(item => { html += '<li>' + item + '</li>'; });
-    html += '</ul>';
+    html += '</ol>';
   }
 
   if (data.refine.length) {
-    html += '<div class="section-label">3 Refine</div><ul class="section-items">';
+    html += '<div class="section-label">Refine</div><ol class="section-items">';
     data.refine.forEach(item => { html += '<li>' + item + '</li>'; });
-    html += '</ul>';
+    html += '</ol>';
   }
 
   if (data.action) {
