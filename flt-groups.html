@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FLT Budapest - Group Allocations</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0A1117;
+    color: #F0EDE6;
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 1400px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .header .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(240,237,230,0.35);
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 36px;
+    font-weight: 600;
+    color: #F0EDE6;
+  }
+
+  .groups {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+  }
+
+  .group {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 36px 32px;
+    backdrop-filter: blur(12px);
+  }
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .group-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .group-a .group-dot { background: #D4A843; box-shadow: 0 0 14px rgba(212,168,67,0.4); }
+  .group-b .group-dot { background: #5BA3E8; box-shadow: 0 0 14px rgba(91,163,232,0.4); }
+  .group-c .group-dot { background: #9B7BE8; box-shadow: 0 0 14px rgba(155,123,232,0.4); }
+
+  .group-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(240,237,230,0.5);
+  }
+
+  .group-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .group-a .group-title { color: #D4A843; }
+  .group-b .group-title { color: #5BA3E8; }
+  .group-c .group-title { color: #9B7BE8; }
+
+  .group-question {
+    font-size: 14px;
+    color: rgba(240,237,230,0.5);
+    font-style: italic;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  .members {
+    list-style: none;
+  }
+  .members li {
+    font-size: 20px;
+    font-weight: 400;
+    color: #F0EDE6;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .members li:last-child { border-bottom: none; }
+
+  .facilitator {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: rgba(240,237,230,0.3);
+    text-transform: uppercase;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: rgba(240,237,230,0.2);
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="tag">FLT Offsite Budapest - 29 April 2026</div>
+    <h1>Breakout Groups</h1>
+  </div>
+
+  <div class="groups">
+    <div class="group group-a">
+      <div class="group-header">
+        <div class="group-dot"></div>
+        <div class="group-label">Group A</div>
+      </div>
+      <div class="group-title">Capability</div>
+      <div class="group-question">"Which capabilities are the scaffolding and which are the building?"</div>
+      <ul class="members">
+        <li>Britta Doettger</li>
+        <li>Marielle Beyer</li>
+        <li>Martin Spaene</li>
+        <li>Svenja Amrhein</li>
+        <li>Florian Regli</li>
+        <li>Bruno Eschli</li>
+      </ul>
+    </div>
+
+    <div class="group group-b">
+      <div class="group-header">
+        <div class="group-dot"></div>
+        <div class="group-label">Group B</div>
+      </div>
+      <div class="group-title">Operating Model</div>
+      <div class="group-question">"Where do people need to be when agents carry context?"</div>
+      <ul class="members">
+        <li>Alan Hippe</li>
+        <li>Edward Harrington</li>
+        <li>Carsten Bernd Reibe</li>
+        <li>Philip Speck</li>
+        <li>Cecile Chassignet</li>
+        <li>Laura Niculae</li>
+      </ul>
+      <div class="facilitator">Marcin floats, starts here</div>
+    </div>
+
+    <div class="group group-c">
+      <div class="group-header">
+        <div class="group-dot"></div>
+        <div class="group-label">Group C</div>
+      </div>
+      <div class="group-title">Leadership</div>
+      <div class="group-question">"What kind of leader does Finance need next?"</div>
+      <ul class="members">
+        <li>Richard Goh</li>
+        <li>Ludmila Pires Chung Gaspar</li>
+        <li>Dirk Koenig</li>
+        <li>Amy Tang</li>
+        <li>Richard von Manteuffel</li>
+        <li>Shehry Rahman</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">40 minutes - 3 Reinforce, 3 Refine, 1 Action Proposal</div>
+</div>
+
+</body>
+</html>
