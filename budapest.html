@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FLT Budapest - Live Synthesis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0A1117;
+    --surface: #111B2E;
+    --ink: #F0EDE6;
+    --ink2: rgba(240,237,230,0.6);
+    --ink3: rgba(240,237,230,0.25);
+    --gold: #D4A843;
+    --blue: #5BA3E8;
+    --violet: #9B7BE8;
+    --teal: #4ECDC4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ─── ORBITAL (idle state) ─── */
+  .orbital-container {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 1.2s ease, transform 1.2s ease;
+    z-index: 1;
+  }
+  .orbital-container.shrunk {
+    opacity: 0;
+    transform: scale(0.3);
+    pointer-events: none;
+  }
+
+  .orbital { width: 420px; height: 420px; position: relative; }
+
+  .core { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .core-disc {
+    width: 110px; height: 110px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #1a2338, #111825);
+    border: 0.5px solid rgba(255,255,255,0.15);
+    box-shadow: 0 0 48px rgba(91,163,232,0.15);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .core-disc .pda { font-family: Georgia, serif; font-size: 32px; color: var(--ink); letter-spacing: -0.02em; }
+  .core-disc .sub { font-family: 'JetBrains Mono', monospace; font-size: 7px; color: var(--ink2); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px; }
+
+  .ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; transform-origin: center; }
+  .ring-1 { width: 240px; height: 240px; margin: -120px 0 0 -120px; border: 0.5px solid rgba(212,168,67,0.35); animation: spin 20s linear infinite; }
+  .ring-2 { width: 330px; height: 330px; margin: -165px 0 0 -165px; border: 0.5px solid rgba(91,163,232,0.3); animation: spin 32s linear infinite; animation-delay: -10s; }
+  .ring-3 { width: 410px; height: 410px; margin: -205px 0 0 -205px; border: 0.5px solid rgba(155,123,232,0.25); animation: spin 46s linear infinite; animation-delay: -22s; }
+
+  .dot { position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; border-radius: 50%; transform: translateX(-50%); }
+  .dot-1 { background: var(--gold); box-shadow: 0 0 14px rgba(212,168,67,0.5); }
+  .dot-2 { background: var(--blue); box-shadow: 0 0 14px rgba(91,163,232,0.5); }
+  .dot-3 { background: var(--violet); box-shadow: 0 0 14px rgba(155,123,232,0.5); }
+
+  .tier-label { position: absolute; top: 14px; left: 50%; font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap; transform: translateX(-50%); }
+  .tier-label-1 { color: var(--gold); animation: counter 20s linear infinite; }
+  .tier-label-2 { color: var(--blue); animation: counter 32s linear infinite; animation-delay: -10s; }
+  .tier-label-3 { color: var(--violet); animation: counter 46s linear infinite; animation-delay: -22s; }
+
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes counter { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(-360deg); } }
+
+  .waiting-text {
+    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink3);
+    transition: opacity 0.8s ease;
+  }
+
+  /* ─── SYNTHESIS GRID (active state) ─── */
+  .synthesis {
+    position: fixed; inset: 0;
+    padding: 40px 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .synthesis.active {
+    opacity: 1; transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .group-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 32px 28px;
+    display: flex; flex-direction: column;
+    backdrop-filter: blur(12px);
+    transition: border-color 0.6s ease, box-shadow 0.6s ease;
+  }
+  .group-card.has-content {
+    border-color: rgba(255,255,255,0.15);
+    box-shadow: 0 4px 40px rgba(0,0,0,0.3);
+  }
+
+  .group-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+  }
+  .group-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .group-a .group-dot { background: var(--gold); box-shadow: 0 0 12px rgba(212,168,67,0.4); }
+  .group-b .group-dot { background: var(--blue); box-shadow: 0 0 12px rgba(91,163,232,0.4); }
+  .group-c .group-dot { background: var(--violet); box-shadow: 0 0 12px rgba(155,123,232,0.4); }
+
+  .group-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink2);
+  }
+  .group-title {
+    font-size: 20px; font-weight: 600; color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .group-a .group-title { color: var(--gold); }
+  .group-b .group-title { color: var(--blue); }
+  .group-c .group-title { color: var(--violet); }
+
+  .group-waiting {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.15em; color: var(--ink3);
+    text-transform: uppercase;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 8px; margin-top: 20px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+  .group-a .section-label { color: var(--gold); }
+  .group-b .section-label { color: var(--blue); }
+  .group-c .section-label { color: var(--violet); }
+
+  .section-items {
+    list-style: none; padding: 0;
+  }
+  .section-items li {
+    font-size: 14px; line-height: 1.5; color: var(--ink);
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .section-items li:last-child { border-bottom: none; }
+
+  .action-box {
+    margin-top: auto; padding-top: 20px;
+  }
+  .action-text {
+    font-size: 14px; line-height: 1.5; color: var(--ink);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .page-footer {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace; font-size: 9px;
+    letter-spacing: 0.15em; color: var(--ink3); text-transform: uppercase;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<!-- IDLE: PDA Orbital -->
+<div class="orbital-container" id="orbitalView">
+  <div class="orbital">
+    <div class="ring ring-1"><span class="dot dot-1"></span><span class="tier-label tier-label-1">Capability</span></div>
+    <div class="ring ring-2"><span class="dot dot-2"></span><span class="tier-label tier-label-2">Operating Model</span></div>
+    <div class="ring ring-3"><span class="dot dot-3"></span><span class="tier-label tier-label-3">Leadership</span></div>
+    <div class="core"><div class="core-disc"><div class="pda">FLT</div><div class="sub">Budapest 2026</div></div></div>
+  </div>
+</div>
+<div class="waiting-text" id="waitingText">Awaiting group synthesis</div>
+
+<!-- ACTIVE: Three group cards -->
+<div class="synthesis" id="synthesisView">
+  <div class="group-card group-a" id="cardA">
+    <div class="group-header"><div class="group-dot"></div><div class="group-tag">Group A</div></div>
+    <div class="group-title">Capability</div>
+    <div class="group-waiting" id="waitA">Awaiting input</div>
+    <div id="contentA" style="display:none"></div>
+  </div>
+  <div class="group-card group-b" id="cardB">
+    <div class="group-header"><div class="group-dot"></div><div class="group-tag">Group B</div></div>
+    <div class="group-title">Operating Model</div>
+    <div class="group-waiting" id="waitB">Awaiting input</div>
+    <div id="contentB" style="display:none"></div>
+  </div>
+  <div class="group-card group-c" id="cardC">
+    <div class="group-header"><div class="group-dot"></div><div class="group-tag">Group C</div></div>
+    <div class="group-title">Leadership</div>
+    <div class="group-waiting" id="waitC">Awaiting input</div>
+    <div id="contentC" style="display:none"></div>
+  </div>
+</div>
+
+<div class="page-footer">FLT Offsite Budapest - 29 April 2026</div>
+
+<script>
+const DATA_URL = 'budapest-data.json';
+const POLL_INTERVAL = 8000;
+let lastUpdated = '';
+let hasAnyContent = false;
+
+function renderGroup(key, data) {
+  const card = document.getElementById('card' + key.toUpperCase());
+  const wait = document.getElementById('wait' + key.toUpperCase());
+  const content = document.getElementById('content' + key.toUpperCase());
+
+  if (data.status === 'waiting' || (!data.reinforce.length && !data.refine.length && !data.action)) {
+    return;
+  }
+
+  wait.style.display = 'none';
+  content.style.display = 'block';
+  card.classList.add('has-content');
+
+  let html = '';
+
+  if (data.reinforce.length) {
+    html += '<div class="section-label">3 Reinforce</div><ul class="section-items">';
+    data.reinforce.forEach(item => { html += '<li>' + item + '</li>'; });
+    html += '</ul>';
+  }
+
+  if (data.refine.length) {
+    html += '<div class="section-label">3 Refine</div><ul class="section-items">';
+    data.refine.forEach(item => { html += '<li>' + item + '</li>'; });
+    html += '</ul>';
+  }
+
+  if (data.action) {
+    html += '<div class="action-box"><div class="section-label">1 Action Proposal</div>';
+    html += '<div class="action-text">' + data.action + '</div></div>';
+  }
+
+  content.innerHTML = html;
+}
+
+async function poll() {
+  try {
+    const res = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.updated === lastUpdated) return;
+    lastUpdated = data.updated;
+
+    const anyContent = Object.values(data.groups).some(g =>
+      g.status !== 'waiting' || g.reinforce.length || g.refine.length || g.action
+    );
+
+    if (anyContent && !hasAnyContent) {
+      hasAnyContent = true;
+      document.getElementById('orbitalView').classList.add('shrunk');
+      document.getElementById('waitingText').style.opacity = '0';
+      document.getElementById('synthesisView').classList.add('active');
+    }
+
+    Object.entries(data.groups).forEach(([key, groupData]) => {
+      renderGroup(key, groupData);
+    });
+  } catch (e) {
+    // Silent retry
+  }
+}
+
+poll();
+setInterval(poll, POLL_INTERVAL);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "groups": {
+    "a": { "title": "Capability", "status": "waiting", "reinforce": [], "refine": [], "action": "" },
+    "b": { "title": "Operating Model", "status": "waiting", "reinforce": [], "refine": [], "action": "" },
+    "c": { "title": "Leadership", "status": "waiting", "reinforce": [], "refine": [], "action": "" }
+  },
+  "updated": ""
+}
