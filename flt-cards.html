@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>FLT Access Cards - Print</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  @page { size: A4 portrait; margin: 0; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: #f5f5f5;
+  }
+
+  .sheet {
+    width: 210mm;
+    height: 297mm;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    background: white;
+  }
+  .sheet:last-child { page-break-after: auto; }
+
+  .card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20mm 24mm;
+    position: relative;
+    border-bottom: 1px dashed #ccc;
+  }
+  .card:last-child { border-bottom: none; }
+
+  .card-inner {
+    text-align: center;
+    max-width: 120mm;
+  }
+
+  .orb {
+    width: 80px; height: 80px;
+    margin: 0 auto 24px;
+  }
+
+  .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 8px;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #0A1628;
+    margin-bottom: 28px;
+  }
+
+  .url-box {
+    background: #0A1628;
+    border-radius: 10px;
+    padding: 20px 32px;
+    margin-bottom: 20px;
+  }
+  .url-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #6B7C93;
+    margin-bottom: 8px;
+  }
+  .url {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 600;
+    color: #F0EDE6;
+    letter-spacing: 0.02em;
+  }
+  .pass-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .pass-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #6B7C93;
+  }
+  .pass {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: #D4A843;
+    letter-spacing: 0.08em;
+  }
+
+  .instruction {
+    font-size: 12px;
+    color: #999;
+    font-style: italic;
+    margin-top: 24px;
+    line-height: 1.5;
+  }
+
+  .cut-mark {
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 8px;
+  }
+  .cut-mark span {
+    font-size: 7px;
+    color: #ddd;
+  }
+
+  @media screen {
+    body { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    .sheet { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    .no-print { display: block; text-align: center; margin-bottom: 20px; }
+  }
+  @media print {
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <p style="font-size:14px;color:#666;">Print this page (Ctrl+P / Cmd+P). Each A4 sheet has 2 cards. Cut along the dashed line. 8 sheets = 16 cards.</p>
+</div>
+
+<script>
+// Generate 8 sheets x 2 cards = 16 cards
+const orbSvg = `<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="200" cy="200" r="180" fill="none" stroke="#9B7BE8" stroke-width="2" opacity="0.3" stroke-dasharray="4 6"/>
+  <circle cx="200" cy="200" r="130" fill="none" stroke="#5BA3E8" stroke-width="2" opacity="0.35" stroke-dasharray="4 6"/>
+  <circle cx="200" cy="200" r="80" fill="none" stroke="#D4A843" stroke-width="2.5" opacity="0.5"/>
+  <circle cx="200" cy="200" r="32" fill="#0A1628" stroke="#F0EDE6" stroke-width="3"/>
+  <text x="200" y="206" font-family="Inter,sans-serif" font-size="22" font-weight="700" fill="#D4A843" text-anchor="middle" letter-spacing="3">FLT</text>
+  <circle cx="200" cy="120" r="6" fill="#D4A843"/>
+  <circle cx="330" cy="200" r="6" fill="#5BA3E8"/>
+  <circle cx="200" cy="380" r="7" fill="#9B7BE8"/>
+</svg>`;
+
+for (let s = 0; s < 8; s++) {
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  for (let c = 0; c < 2; c++) {
+    sheet.innerHTML += `
+      <div class="card">
+        <div class="card-inner">
+          <div class="orb">${orbSvg}</div>
+          <div class="label">Tacit Lab - FLT Budapest</div>
+          <div class="title">Finance Intelligence Workshop</div>
+          <div class="url-box">
+            <div class="url-label">Open in your browser</div>
+            <div class="url">flt.fintank.dev</div>
+            <div class="pass-row">
+              <span class="pass-label">Passphrase</span>
+              <span class="pass">FLT2026</span>
+            </div>
+          </div>
+          <div class="instruction">Do not open until instructed.<br>Your screen is private - nothing is shared or collected.</div>
+        </div>
+        ${c === 0 ? '<div class="cut-mark"><span>✂</span><span>✂</span></div>' : ''}
+      </div>`;
+  }
+  document.body.appendChild(sheet);
+}
+</script>
+
+</body>
+</html>
