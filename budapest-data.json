@@ -2,7 +2,7 @@
   "groups": {
     "a": { "title": "Capability", "status": "waiting", "reinforce": [], "refine": [], "action": "" },
     "b": { "title": "Operating Model", "status": "waiting", "reinforce": [], "refine": [], "action": "" },
-    "c": { "title": "Leadership", "status": "active", "reinforce": ["Finance excellence as the enduring foundation", "Transitionary digital skills - invest now, expect them to automate"], "refine": ["Tiers to nodes - capabilities as a network, not a ladder", "PDA concept - sharpen the destination picture"], "action": "We will start work on a new white paper" }
+    "c": { "title": "Leadership", "status": "waiting", "reinforce": [], "refine": [], "action": "" }
   },
-  "updated": "2026-04-27T18:39:00+02:00"
+  "updated": ""
 }
