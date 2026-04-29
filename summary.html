@@ -1,394 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workshop Summary - AI Insights</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLT Budapest - Breakout Results</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-        body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #533a7d 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* AI-inspired animated background elements */
-        .neural-network {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            opacity: 0.1;
-        }
+  body {
+    background: #0A1117;
+    color: #F0EDE6;
+    font-family: 'Inter', system-ui, sans-serif;
+    padding: 48px 24px;
+  }
 
-        .node {
-            position: absolute;
-            width: 3px;
-            height: 3px;
-            background: #64ffda;
-            border-radius: 50%;
-            animation: pulse 4s infinite ease-in-out;
-        }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 
-        .connection {
-            position: absolute;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #64ffda, transparent);
-            animation: dataFlow 3s infinite ease-in-out;
-        }
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(240,237,230,0.3);
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 300;
+    color: #F0EDE6;
+    letter-spacing: -0.02em;
+  }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.5); }
-        }
+  .convergence {
+    max-width: 720px;
+    margin: 0 auto 64px;
+    text-align: center;
+    padding: 32px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+  }
+  .convergence p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(240,237,230,0.6);
+    font-weight: 300;
+  }
+  .convergence em {
+    color: #F0EDE6;
+    font-style: normal;
+    font-weight: 400;
+  }
 
-        @keyframes dataFlow {
-            0% { opacity: 0; transform: scaleX(0); }
-            50% { opacity: 0.8; transform: scaleX(1); }
-            100% { opacity: 0; transform: scaleX(0); }
-        }
+  .group-section {
+    margin-bottom: 64px;
+  }
 
-        @keyframes typewriter {
-            0% { width: 0; }
-            100% { width: 100%; }
-        }
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .group-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .group-a .group-dot { background: #D4A843; box-shadow: 0 0 16px rgba(212,168,67,0.4); }
+  .group-b .group-dot { background: #5BA3E8; box-shadow: 0 0 16px rgba(91,163,232,0.4); }
+  .group-c .group-dot { background: #9B7BE8; box-shadow: 0 0 16px rgba(155,123,232,0.4); }
 
-        @keyframes blink {
-            0%, 50% { border-color: transparent; }
-            51%, 100% { border-color: #64ffda; }
-        }
+  .group-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(240,237,230,0.4);
+  }
 
-        .main-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 60px 80px;
-            width: 85vw;
-            height: 60vh;
-            min-height: 400px;
-            box-shadow: 
-                0 32px 64px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
+  .group-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .group-a .group-title { color: #D4A843; }
+  .group-b .group-title { color: #5BA3E8; }
+  .group-c .group-title { color: #9B7BE8; }
 
-        .ai-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: linear-gradient(45deg, #64ffda, #00bcd4);
-            color: #0a0a0a;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            margin: 0 auto 40px auto;
-            animation: glow 3s infinite ease-in-out;
-            white-space: nowrap;
-            width: auto;
-            max-width: 250px;
-        }
+  .group-question {
+    font-size: 15px;
+    color: rgba(240,237,230,0.4);
+    font-style: italic;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
 
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(100, 255, 218, 0.3); }
-            50% { box-shadow: 0 0 40px rgba(100, 255, 218, 0.6); }
-        }
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
 
-        .ai-icon {
-            width: 16px;
-            height: 16px;
-            background: #0a0a0a;
-            border-radius: 3px;
-            position: relative;
-        }
+  .card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 28px 24px;
+    backdrop-filter: blur(12px);
+  }
 
-        .ai-icon::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
-            background: #64ffda;
-            border-radius: 50%;
-            animation: aiPulse 2s infinite ease-in-out;
-        }
+  .card.full {
+    grid-column: 1 / -1;
+  }
 
-        @keyframes aiPulse {
-            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
-        }
+  .card-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(240,237,230,0.3);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
 
-        .title {
-            color: #ffffff;
-            font-size: clamp(32px, 4vw, 48px);
-            font-weight: 300;
-            margin-bottom: 40px;
-            letter-spacing: -0.02em;
-        }
+  .group-a .card-label { color: rgba(212,168,67,0.5); }
+  .group-b .card-label { color: rgba(91,163,232,0.5); }
+  .group-c .card-label { color: rgba(155,123,232,0.5); }
 
-        .summary-text {
-            color: #64ffda;
-            font-size: clamp(20px, 2.5vw, 32px);
-            line-height: 1.6;
-            font-weight: 400;
-            letter-spacing: -0.01em;
-            text-shadow: 
-                0 0 10px rgba(100, 255, 218, 0.5),
-                0 0 20px rgba(100, 255, 218, 0.3),
-                0 0 30px rgba(100, 255, 218, 0.1);
-            margin: 0 auto;
-            opacity: 0;
-        }
+  .card ul {
+    list-style: none;
+  }
+  .card li {
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(240,237,230,0.8);
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-weight: 300;
+  }
+  .card li:last-child { border-bottom: none; }
 
-        .summary-text.ready {
-            opacity: 1;
-        }
+  .card li strong {
+    color: #F0EDE6;
+    font-weight: 500;
+  }
 
-        .summary-text.complete {
-            animation: none;
-        }
+  .card li .sub {
+    display: block;
+    font-size: 13px;
+    color: rgba(240,237,230,0.4);
+    margin-top: 2px;
+    padding-left: 16px;
+  }
 
-        .nav-links {
-            position: fixed;
-            top: 30px;
-            left: 30px;
-            display: flex;
-            gap: 15px;
-            z-index: 20;
-        }
+  .action-card {
+    border-color: rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+  }
 
-        .nav-links a {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            color: #e0e6ed;
-            padding: 12px 20px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+  .group-a .action-card { border-color: rgba(212,168,67,0.2); background: rgba(212,168,67,0.04); }
+  .group-b .action-card { border-color: rgba(91,163,232,0.2); background: rgba(91,163,232,0.04); }
+  .group-c .action-card { border-color: rgba(155,123,232,0.2); background: rgba(155,123,232,0.04); }
 
-        .nav-links a:hover {
-            background: rgba(100, 255, 218, 0.2);
-            border-color: rgba(100, 255, 218, 0.3);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(100, 255, 218, 0.2);
-        }
+  .action-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: rgba(240,237,230,0.85);
+    font-weight: 300;
+  }
+  .action-text strong {
+    color: #F0EDE6;
+    font-weight: 500;
+  }
 
-        .timestamp {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 8px 16px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
+  .group-a .action-text strong { color: #D4A843; }
+  .group-b .action-text strong { color: #5BA3E8; }
+  .group-c .action-text strong { color: #9B7BE8; }
 
-        /* Responsive adjustments */
-        @media (max-width: 1024px) {
-            .main-container {
-                padding: 40px 50px;
-                max-width: 90vw;
-            }
-        }
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 0 0 64px;
+  }
 
-        @media (max-width: 768px) {
-            .main-container {
-                padding: 30px 40px;
-                max-width: 95vw;
-            }
-            
-            .nav-links {
-                position: relative;
-                top: auto;
-                left: auto;
-                justify-content: center;
-                margin-bottom: 20px;
-            }
-        }
-    </style>
+  .footer {
+    text-align: center;
+    padding: 40px 0 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .footer .tag { margin-bottom: 0; }
+
+  @media (max-width: 700px) {
+    body { padding: 32px 16px; }
+    .columns { grid-template-columns: 1fr; }
+    .card.full { grid-column: auto; }
+  }
+</style>
 </head>
 <body>
-    <div class="neural-network" id="neuralNetwork"></div>
-    
-    <div class="main-container">
-        <div class="ai-badge">
-            <div class="ai-icon"></div>
-            AI-Generated Insights
-        </div>
-        
-        <h1 class="title">Breakout Session Summary</h1>
-        
-        <div class="summary-text" id="summaryText">
-            Enter summary text via URL parameter: ?text="Your workshop summary here"
-        </div>
+
+<div class="container">
+  <div class="header">
+    <div class="tag">FLT Offsite Budapest - 29 April 2026</div>
+    <h1>Breakout Results</h1>
+  </div>
+
+  <div class="convergence">
+    <p>Three groups. Three lenses. One convergence: <em>judgment, accountability, and the question of what finance becomes when AI carries the routine</em>.</p>
+  </div>
+
+  <!-- GROUP A -->
+  <div class="group-section group-a">
+    <div class="group-header">
+      <div class="group-dot"></div>
+      <div class="group-label">Group A</div>
     </div>
+    <div class="group-title">Capability</div>
+    <div class="group-question">"Which capabilities are the scaffolding and which are the building?"</div>
 
-    <div class="timestamp" id="timestamp"></div>
+    <div class="columns">
+      <div class="card">
+        <div class="card-label">Key questions raised</div>
+        <ul>
+          <li>Where is our routine work? <span class="sub">Biggest bang for buck - where?</span></li>
+          <li>How much do we want to replace with AI?</li>
+          <li>What are our <strong>core skills</strong> - which do we keep, which collapse?</li>
+          <li>What ratio <strong>hybrid Finance</strong> [agent : human]?</li>
+          <li>Do we need both Trainer and Architect roles?</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-label">The agent question</div>
+        <ul>
+          <li><strong>Agent maturity</strong> - how to develop an agent</li>
+          <li>How to manage agents out</li>
+          <li>How to <strong>recruit</strong> agents</li>
+          <li>Business case for agents</li>
+          <li>How to <strong>certify</strong> agents</li>
+          <li>How do we ensure <strong>oversight</strong></li>
+        </ul>
+      </div>
+      <div class="card full action-card">
+        <div class="card-label">Core tension</div>
+        <div class="action-text">
+          <strong>What are our future deliverables?</strong> Where do we get expertise? What are our models for training new talent <em>and</em> agents? How do we develop <strong>judgment</strong> - and what are the costs and opportunities?
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        class SummaryDisplay {
-            constructor() {
-                this.init();
-                this.createNeuralNetwork();
-                this.updateTimestamp();
-            }
+  <div class="divider"></div>
 
-            init() {
-                // Check for URL parameters
-                this.checkURLParams();
-                // Start typewriter effect after content is set
-                setTimeout(() => this.startTypewriter(), 1000);
-            }
+  <!-- GROUP B -->
+  <div class="group-section group-b">
+    <div class="group-header">
+      <div class="group-dot"></div>
+      <div class="group-label">Group B</div>
+    </div>
+    <div class="group-title">Operating Model</div>
+    <div class="group-question">"Where do people need to be when agents carry context?"</div>
 
-            checkURLParams() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const textParam = urlParams.get('text');
-                
-                if (textParam) {
-                    const decodedText = decodeURIComponent(textParam).replace(/"/g, '');
-                    const summaryElement = document.getElementById('summaryText');
-                    summaryElement.textContent = decodedText;
-                    
-                    // Clear the URL parameters for cleaner display
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                } else {
-                    // Default message if no text provided
-                    const summaryElement = document.getElementById('summaryText');
-                    summaryElement.textContent = "Access this page with ?text=\"Your summary here\" to display workshop insights.";
-                }
-            }
+    <div class="columns">
+      <div class="card">
+        <div class="card-label">Six priorities</div>
+        <ul>
+          <li>Deliver on the <strong>digital roadmap</strong> <span class="sub">Interdependencies across initiatives</span></li>
+          <li>Understand and fully utilize <strong>ASPIRE</strong></li>
+          <li><strong>GRaPE</strong> development and utilization <span class="sub">Split Dia/Pharma - integrated DIS</span></li>
+          <li>Tool utilization over time <span class="sub">New technologies as they arrive</span></li>
+          <li>ALL -> <strong>get more operational</strong></li>
+          <li>Integrated system / <strong>DIS</strong></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-label">What AI cannot do</div>
+        <ul>
+          <li><strong>Business acumen</strong></li>
+          <li><strong>Execution</strong> and <strong>judgment</strong> <span class="sub">The E/J cycle: Based on info I have, what do I decide -> Execute the decision</span></li>
+          <li>What can we do <strong>today</strong>? <span class="sub">Apply what we can apply already</span></li>
+        </ul>
+      </div>
+      <div class="card full action-card">
+        <div class="card-label">Provocation</div>
+        <div class="action-text">
+          If AI takes over most tasks, would the organization be <strong>just smaller - or structured differently?</strong>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            startTypewriter() {
-                const textElement = document.getElementById('summaryText');
-                const finalText = textElement.textContent;
-                
-                // Create spans for each character with transparency
-                const charSpans = finalText.split('').map((char, index) => {
-                    const opacity = char === ' ' ? 1 : 0; // Keep spaces visible
-                    return `<span style="opacity: ${opacity}; transition: opacity 0.3s ease;">${char}</span>`;
-                });
-                
-                textElement.innerHTML = charSpans.join('');
-                
-                // Make the text container visible now that spans are ready
-                textElement.classList.add('ready');
-                
-                // Get all character spans (excluding spaces)
-                const spans = Array.from(textElement.querySelectorAll('span')).filter(span => 
-                    span.textContent !== ' '
-                );
-                
-                let revealedCount = 0;
-                const totalChars = spans.length;
-                
-                const revealInterval = setInterval(() => {
-                    // Find hidden spans
-                    const hiddenSpans = spans.filter(span => 
-                        parseFloat(span.style.opacity) === 0
-                    );
-                    
-                    if (hiddenSpans.length === 0) {
-                        clearInterval(revealInterval);
-                        textElement.classList.add('complete');
-                        return;
-                    }
-                    
-                    // Reveal 1-3 random characters each iteration
-                    const charsToReveal = Math.min(
-                        Math.floor(Math.random() * 3) + 1,
-                        hiddenSpans.length
-                    );
-                    
-                    for (let i = 0; i < charsToReveal; i++) {
-                        if (hiddenSpans.length > 0) {
-                            const randomIndex = Math.floor(Math.random() * hiddenSpans.length);
-                            const span = hiddenSpans[randomIndex];
-                            
-                            span.style.opacity = '1';
-                            revealedCount++;
-                            
-                            // Remove from hidden list
-                            hiddenSpans.splice(randomIndex, 1);
-                        }
-                    }
-                }, 85); // Reveal characters every 85ms (30% faster than 120ms)
-            }
+  <div class="divider"></div>
 
-            createNeuralNetwork() {
-                const network = document.getElementById('neuralNetwork');
-                const nodeCount = 20;
-                
-                // Create nodes
-                for (let i = 0; i < nodeCount; i++) {
-                    const node = document.createElement('div');
-                    node.className = 'node';
-                    node.style.left = Math.random() * 100 + '%';
-                    node.style.top = Math.random() * 100 + '%';
-                    node.style.animationDelay = Math.random() * 4 + 's';
-                    network.appendChild(node);
-                }
-                
-                // Create connections
-                for (let i = 0; i < 10; i++) {
-                    const connection = document.createElement('div');
-                    connection.className = 'connection';
-                    connection.style.left = Math.random() * 90 + '%';
-                    connection.style.top = Math.random() * 100 + '%';
-                    connection.style.width = (Math.random() * 200 + 100) + 'px';
-                    connection.style.transform = `rotate(${Math.random() * 360}deg)`;
-                    connection.style.animationDelay = Math.random() * 3 + 's';
-                    network.appendChild(connection);
-                }
-            }
+  <!-- GROUP C -->
+  <div class="group-section group-c">
+    <div class="group-header">
+      <div class="group-dot"></div>
+      <div class="group-label">Group C</div>
+    </div>
+    <div class="group-title">Leadership</div>
+    <div class="group-question">"What kind of leader does Finance need next?"</div>
 
-            updateTimestamp() {
-                const timestamp = document.getElementById('timestamp');
-                const now = new Date();
-                const timeString = now.toLocaleTimeString('en-US', { 
-                    hour12: false, 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    second: '2-digit'
-                });
-                const dateString = now.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-                timestamp.textContent = `Generated: ${dateString} ${timeString}`;
-            }
-        }
+    <div class="columns">
+      <div class="card">
+        <div class="card-label">Reinforce</div>
+        <ul>
+          <li><strong>Finance Excellence</strong></li>
+          <li><strong>Business Acumen</strong> + Context</li>
+          <li>Tech, Data & AI <strong>curiosity</strong> & literacy</li>
+          <li>Management <strong>trust / outcomes</strong> <span class="sub">People + tech</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-label">Refine</div>
+        <ul>
+          <li>Level of <strong>trust in AI</strong> <span class="sub">Trained by specialized trainers</span></li>
+          <li>Family of <strong>specialized capability</strong></li>
+          <li><strong>Judgment + decision making</strong> + focus -> execution</li>
+          <li><strong>Individualization</strong> of outcomes to Roche</li>
+        </ul>
+      </div>
+      <div class="card full action-card">
+        <div class="card-label">Action proposal</div>
+        <div class="action-text">
+          Build a <strong>Credibility / Impact heatmap</strong> - "future ready vs. disrupted" - scored across <strong>Data, Process, Speed, Compliance</strong> (scenarios), and <strong>Business Impact</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Initialize the summary display
-        new SummaryDisplay();
-    </script>
+  <div class="footer">
+    <div class="tag">Finance Intelligence Framework - FLT Offsite Budapest 2026</div>
+  </div>
+</div>
+
 </body>
 </html>
