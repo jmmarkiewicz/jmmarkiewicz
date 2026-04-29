@@ -1,8 +1,50 @@
 {
   "groups": {
-    "a": { "title": "Capability", "status": "waiting", "reinforce": [], "refine": [], "action": "" },
-    "b": { "title": "Operating Model", "status": "waiting", "reinforce": [], "refine": [], "action": "" },
-    "c": { "title": "Leadership", "status": "waiting", "reinforce": [], "refine": [], "action": "" }
+    "a": {
+      "title": "Capability",
+      "status": "active",
+      "reinforce": [
+        "Core finance skills - identify what we keep vs. what collapses",
+        "Agent maturity: how to develop, recruit, certify, and manage agents",
+        "Hybrid finance model - define the agent-to-human ratio"
+      ],
+      "refine": [
+        "Training models for both talent and agents - test environments needed",
+        "Oversight and accountability - how to certify agents, ensure judgment",
+        "Future deliverables - where do we get expertise when routine work shifts to AI"
+      ],
+      "action": "Map our biggest pain points and opportunities. Answer: what are costs of inaction vs. costs of investment - for both agent development and talent development?"
+    },
+    "b": {
+      "title": "Operating Model",
+      "status": "active",
+      "reinforce": [
+        "Deliver on the digital roadmap - understand interdependencies",
+        "Understand and fully utilize ASPIRE",
+        "Business acumen - the thing AI cannot replace"
+      ],
+      "refine": [
+        "GRaPE development and utilization - split Dia/Pharma, integrated DIS",
+        "Tool utilization over time as new technologies arrive",
+        "Judgment and execution cycle: based on info I have, what do I decide - then execute"
+      ],
+      "action": "If AI takes over most tasks, would the organization be just smaller - or structured differently? Get more operational across ALL initiatives."
+    },
+    "c": {
+      "title": "Leadership",
+      "status": "active",
+      "reinforce": [
+        "Finance Excellence",
+        "Business Acumen + Context",
+        "Tech, Data & AI curiosity and literacy; Management trust and outcomes"
+      ],
+      "refine": [
+        "Level of trust in AI - trained by specialized trainers",
+        "Family of specialized capability; individualization of outcomes to Roche",
+        "Judgment + decision making + focus leading to execution"
+      ],
+      "action": "Build a Credibility/Impact heatmap - 'future ready vs. disrupted' - scored across Data, Process, Speed, Compliance scenarios, and Business Impact."
+    }
   },
-  "updated": ""
+  "updated": "2026-04-29T15:30:00Z"
 }
